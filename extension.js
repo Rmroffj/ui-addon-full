@@ -1274,6 +1274,7 @@ function watchCharacterSaves() {
       characterMetaAt = 0;
       homeData = null;
       if (document.querySelector(CHARACTER_CARD_SELECTOR)) void loadCharacterMeta();
+      homeRepaint?.();
     }, 300);
   });
 }
@@ -1701,9 +1702,11 @@ function mountHome(page) {
   page.dataset.malangHomePage = "";
   page.append(root);
   let painted = "";
+  const signature = (data) =>
+    JSON.stringify([data.recentChats, data.characters.map((character) => [character.id, character.updatedAt, character.favorite])]);
   const paint = (data) => {
     if (root.isConnected) {
-      painted = JSON.stringify(data.recentChats);
+      painted = signature(data);
       for (const observer of homeRowObservers) observer.disconnect();
       homeRowObservers.clear();
       root.replaceChildren(buildHome(data));
@@ -1712,7 +1715,7 @@ function mountHome(page) {
   homeRepaint = () => {
     if (!root.isConnected) return;
     loadHome().then((data) => {
-      if (JSON.stringify(data.recentChats) !== painted) paint(data);
+      if (signature(data) !== painted) paint(data);
     }, (error) => marinara.log.warn("home could not be read", error));
   };
   if (homeData) paint(homeData);
