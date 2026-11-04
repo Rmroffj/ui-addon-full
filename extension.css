@@ -994,11 +994,15 @@ html[data-theme="dark"] {
 
 .rpg-chat-area[data-chat-mode="roleplay"][data-roleplay-presentation="classic"] .mari-roleplay-message-body > [data-rpc-head] > [data-rpc-lead] {
   z-index: 3;
-  grid-area: 2 / 4;
+  grid-area: 1 / 1 / 2 / -1;
   align-self: center;
   justify-self: start;
-  margin-left: 0.5rem;
-  color: var(--rpc-ink);
+  margin-left: 1rem;
+  color: var(--rpc-bar-ink);
+}
+
+.rpg-chat-area[data-chat-mode="roleplay"][data-roleplay-presentation="classic"] .mari-roleplay-message-body > [data-rpc-head][data-rpc-led] > .mari-message-name {
+  padding-left: var(--rpc-lead-pad, 5rem);
 }
 
 .rpg-chat-area[data-chat-mode="roleplay"][data-roleplay-presentation="classic"] .mari-roleplay-message-body > .mari-message-actions {
@@ -1250,6 +1254,10 @@ html[data-theme="dark"] {
     grid-area: auto;
     margin: 0;
   }
+  .rpg-chat-area[data-chat-mode="roleplay"][data-roleplay-presentation="classic"] .mari-roleplay-message-body[data-rpc-stickered] > [data-rpc-head] > [data-rpc-lead],
+  .rpg-chat-area[data-chat-mode="roleplay"][data-roleplay-presentation="classic"] .mari-roleplay-message-body[data-rpc-stickered] > [data-rpc-head] > [data-rpc-lead] * {
+    color: color-mix(in srgb, var(--rpc-ink) 60%, transparent);
+  }
 
   .rpg-chat-area[data-chat-mode="roleplay"][data-roleplay-presentation="classic"] .mari-roleplay-message-body > .rpc-deco > .rpc-note-slash {
     padding-left: 1rem;
@@ -1343,7 +1351,7 @@ html[data-theme="dark"] {
 
 .rpg-chat-area[data-chat-mode="roleplay"][data-roleplay-presentation="classic"] .mari-roleplay-message-body > [data-rpc-head] > [data-rpc-lead] *,
 .rpg-chat-area[data-chat-mode="roleplay"][data-roleplay-presentation="classic"] .mari-roleplay-message-body > [data-rpc-head] > [data-rpc-lead] {
-  color: color-mix(in srgb, var(--rpc-ink) 60%, transparent);
+  color: var(--rpc-bar-ink);
   opacity: 1;
 }
 

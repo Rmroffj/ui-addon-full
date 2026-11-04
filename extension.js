@@ -924,6 +924,10 @@ function markHead(row, chatId) {
     setFlag(part, "rpcTime", part === nameNode?.nextElementSibling && part.tagName === "SPAN" && !part.title);
   }
   setFlag(head, "rpcLed", led);
+  const lead = led && nameNode ? [...head.children].findLast((part) => part.dataset.rpcLead !== undefined) : null;
+  const leadBox = lead?.getBoundingClientRect();
+  if (leadBox?.width) head.style.setProperty("--rpc-lead-pad", `${Math.max(0, Math.ceil(leadBox.right + 8 - nameNode.getBoundingClientRect().left))}px`);
+  else if (!lead) head.style.removeProperty("--rpc-lead-pad");
   for (const span of head.querySelectorAll(":scope > span")) {
     const number = span.textContent.match(/^#(\d+)$/)?.[1];
     if (number && span.dataset.rpcNo !== number) span.dataset.rpcNo = number;
