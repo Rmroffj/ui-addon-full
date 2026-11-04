@@ -6932,7 +6932,11 @@ html[data-malang-ui][data-malang-detail] [data-component="RightPanelDesktopSlot"
   background: transparent !important;
   box-shadow: none !important;
   color: var(--ph-mute) !important;
-  font: 400 0.8125rem var(--ph-body) !important;
+  font: 400 12px var(--ph-kr) !important;
+}
+[data-ph-tabbed] .mari-editor-navigation-tabs > button svg {
+  width: 14px;
+  height: 14px;
 }
 [data-ph-tabbed] .mari-editor-navigation-tabs > button + button {
   border-left: 1px solid var(--ph-line) !important;
@@ -7390,4 +7394,14 @@ html[data-malang-ui] [data-ph-convo] .mari-message-avatar > :is(button, div) { b
   [data-lorebook-entry-row-id][data-ph-open] > [data-ph-lore="head"] > [data-ph-lore="name"] { order: 10 !important; flex: 1 0 100% !important; }
   [data-lorebook-entry-row-id] > [data-ph-lore="head"] { position: relative; }
   [data-lorebook-entry-row-id] > [data-ph-lore="head"] > [data-ph-lore="quick"] { position: static !important; }
+}
+html[data-malang-ui] :is([data-malang-library="lorebooks"] [data-touch-drag-card] > [data-ph-lore-actions], :is([data-malang-library="presets"], [data-malang-library="connections"]) [data-ph-item] > [data-ph-actions]) { position: absolute !important; inset: auto 10px 8px auto !important; display: flex; gap: 0.125rem; margin: 0 !important; padding: 0 !important; transform: none !important; translate: none !important; border: 0 !important; background: none !important; box-shadow: none !important; opacity: 1 !important; pointer-events: auto !important; }
+html[data-malang-ui] :is([data-malang-library="lorebooks"] [data-touch-drag-card] > [data-ph-lore-actions], :is([data-malang-library="presets"], [data-malang-library="connections"]) [data-ph-item] > [data-ph-actions]) button { width: 1.5rem; min-width: 1.5rem; height: 1.5rem; min-height: 1.5rem; padding: 0.25rem; border: 0 !important; background: transparent !important; box-shadow: none !important; pointer-events: auto !important; }
+html[data-malang-ui] :is([data-malang-library="lorebooks"] [data-touch-drag-card] > [data-ph-lore-actions], :is([data-malang-library="presets"], [data-malang-library="connections"]) [data-ph-item] > [data-ph-actions]) button svg { width: 0.875rem; height: 0.875rem; }
+html[data-malang-ui] :is([data-malang-library="lorebooks"] [data-touch-drag-card] > [data-ph-lore-text], :is([data-malang-library="presets"], [data-malang-library="connections"]) [data-ph-item] [data-ph-card-text]) { padding-right: 5.25rem !important; }
+@media (max-width: 767px) {
+  html[data-malang-ui] :is([data-malang-library="lorebooks"] [data-touch-drag-card] > [data-ph-lore-actions], :is([data-malang-library="presets"], [data-malang-library="connections"]) [data-ph-item] > [data-ph-actions]) button { width: 20px; min-width: 20px; height: 20px; min-height: 20px; padding: 3px; }
+  html[data-malang-ui] :is([data-malang-library="lorebooks"] [data-touch-drag-card] > [data-ph-lore-actions], :is([data-malang-library="presets"], [data-malang-library="connections"]) [data-ph-item] > [data-ph-actions]) button svg { width: 12px; height: 12px; }
+  html[data-malang-ui] [data-malang-library] [data-folder-actions] button { min-width: 22px !important; min-height: 22px !important; width: 22px; height: 22px; padding: 4px !important; }
+  html[data-malang-ui] [data-malang-library] [data-folder-actions] button svg { width: 12px; height: 12px; }
 }

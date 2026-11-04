@@ -2986,6 +2986,15 @@ function classifyLibrary(root) {
   if (kind === "presets") presetTabsOf(root);
   if (PLAIN_LISTS.has(kind)) markPlainList(root);
   else if (kind !== "characters") root.querySelectorAll('[data-drag-kind$="folder"]').forEach(markFolder);
+  if (kind === "lorebooks") {
+    for (const card of root.querySelectorAll('[data-touch-drag-card="lorebook"]')) {
+      for (const child of card.children) {
+        const actions = child.tagName === "DIV" && Boolean(child.querySelector(".lucide-trash-2, .lucide-trash2"));
+        setFlag(child, "phLoreActions", actions);
+        setFlag(child, "phLoreText", child.tagName === "DIV" && !actions);
+      }
+    }
+  }
   for (const camera of root.querySelectorAll(".lucide-camera")) {
     const cover = camera.parentElement;
     if (cover?.tagName === "SPAN" && cover.parentElement?.tagName === "BUTTON") markPart(cover, "phCam");
@@ -3340,6 +3349,8 @@ marinara.onCleanup(() => {
     "phDownload",
     "phLabel",
     "phPersonaActions",
+    "phLoreActions",
+    "phLoreText",
     "phCardText",
     "phCardName",
     "phCardTitle",
