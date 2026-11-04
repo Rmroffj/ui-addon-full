@@ -781,6 +781,8 @@ const ACTION_ORDER = {
 const MESSAGE_TOOLS = [
   ["edit", "편집", ["lucide-pencil"]],
   ["copy", "복사", ["lucide-copy", "lucide-check"]],
+  ["reply", "답장", ["lucide-reply"]],
+  ["reaction", "반응", ["lucide-smile-plus"]],
   ["translate", "번역", ["lucide-languages"]],
   ["rewrite", "재작성 원문 전환", ["lucide-shield"]],
   ["regenerate", "재생성", ["lucide-refresh-cw"]],
@@ -3352,6 +3354,7 @@ marinara.onCleanup(() => {
     "phDownload",
     "phLabel",
     "phPersonaActions",
+    "phLibLabel",
     "phLoreActions",
     "phLoreText",
     "phCardText",
@@ -3396,6 +3399,11 @@ const pageMounts = new MutationObserver((records) => {
       [...record.addedNodes].some(node => node.nodeType === 1 &&
         (node.matches(tabListSelector) || node.querySelector(tabListSelector))))) hubTabs();
   for (const record of records) {
+    const messageRow = record.target.closest?.(ROW_SELECTOR);
+    if (messageRow && [...record.addedNodes, ...record.removedNodes].some((node) => node.nodeType === 1 && (node.matches(".lucide-eye-off") || node.querySelector(".lucide-eye-off")))) {
+      dirtyRows.add(messageRow);
+      flushLater();
+    }
     const loreRow = record.target.closest?.(LORE_ROW);
     if (loreRow) queueLoreRow(loreRow);
     const chromeHost = record.target.closest?.(CHROME_HOSTS);
@@ -3736,6 +3744,7 @@ function tagLibraryRow(row, kind) {
   } else if (kind === "library") {
     for (const button of row.children) {
       if (button.querySelector(".lucide-users, .lucide-venetian-mask")) setPart(button, "phLib", "personas"); else clearPart(button, "phLib");
+      if (button.tagName === "BUTTON") for (const part of button.children) setFlag(part, "phLibLabel", part.tagName.toLowerCase() !== "svg" && !part.querySelector("svg"));
     }
   } else if (kind === "other" && row.parentElement?.dataset.malangLibrary === "connections") tagTile(row);
 }
@@ -4160,6 +4169,9 @@ function syncConvo(root) {
   }
   setFlag(root, "phConvo", true);
   syncConvoBackdrop(root);
+  for (const actions of root.querySelectorAll('[data-component="ConversationMessage.Actions"]')) orderActions(actions);
+  for (const button of root.querySelectorAll(".mari-message-body > button")) setFlag(button, "phConvoHidden", Boolean(button.querySelector(".lucide-eye-off")));
+  for (const message of root.querySelectorAll("[data-message-id] > .mari-message")) setFlag(message, "phConvoHiddenRow", Boolean(message.querySelector(".lucide-eye-off")));
   syncRemote(root);
 }
 
@@ -4196,6 +4208,8 @@ marinara.onCleanup(() => {
   convoObservers.clear();
   document.querySelectorAll(".mari-ph-convo-dream").forEach((node) => node.remove());
   document.querySelectorAll("[data-ph-convo]").forEach((node) => delete node.dataset.phConvo);
+  document.querySelectorAll("[data-ph-convo-hidden]").forEach((node) => delete node.dataset.phConvoHidden);
+  document.querySelectorAll("[data-ph-convo-hidden-row]").forEach((node) => delete node.dataset.phConvoHiddenRow);
   for (const root of document.querySelectorAll(CONVO_SELECTOR)) root.style.removeProperty("--convo-point");
 });
 

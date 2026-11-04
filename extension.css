@@ -994,15 +994,11 @@ html[data-theme="dark"] {
 
 .rpg-chat-area[data-chat-mode="roleplay"][data-roleplay-presentation="classic"] .mari-roleplay-message-body > [data-rpc-head] > [data-rpc-lead] {
   z-index: 3;
-  grid-area: 1 / 1 / 2 / -1;
+  grid-area: 2 / 4;
   align-self: center;
   justify-self: start;
-  margin-left: 1rem;
-  color: var(--rpc-bar-ink);
-}
-
-.rpg-chat-area[data-chat-mode="roleplay"][data-roleplay-presentation="classic"] .mari-roleplay-message-body > [data-rpc-head][data-rpc-led] > .mari-message-name {
-  padding-left: 3rem;
+  margin-left: 0.5rem;
+  color: var(--rpc-ink);
 }
 
 .rpg-chat-area[data-chat-mode="roleplay"][data-roleplay-presentation="classic"] .mari-roleplay-message-body > .mari-message-actions {
@@ -1247,6 +1243,14 @@ html[data-theme="dark"] {
     padding-left: 7.5rem;
   }
 
+  .rpg-chat-area[data-chat-mode="roleplay"][data-roleplay-presentation="classic"] .mari-roleplay-message-body[data-rpc-stickered] > [data-rpc-head] > [data-rpc-lead] {
+    position: absolute;
+    top: -1.75rem;
+    left: 7.375rem;
+    grid-area: auto;
+    margin: 0;
+  }
+
   .rpg-chat-area[data-chat-mode="roleplay"][data-roleplay-presentation="classic"] .mari-roleplay-message-body > .rpc-deco > .rpc-note-slash {
     padding-left: 1rem;
   }
@@ -1339,7 +1343,7 @@ html[data-theme="dark"] {
 
 .rpg-chat-area[data-chat-mode="roleplay"][data-roleplay-presentation="classic"] .mari-roleplay-message-body > [data-rpc-head] > [data-rpc-lead] *,
 .rpg-chat-area[data-chat-mode="roleplay"][data-roleplay-presentation="classic"] .mari-roleplay-message-body > [data-rpc-head] > [data-rpc-lead] {
-  color: var(--rpc-bar-ink);
+  color: color-mix(in srgb, var(--rpc-ink) 60%, transparent);
   opacity: 1;
 }
 
@@ -1462,7 +1466,7 @@ html[data-theme="dark"] {
   -webkit-line-clamp: 3;
 }
 
-.rpg-chat-area[data-chat-mode="roleplay"][data-roleplay-presentation="classic"] .mari-roleplay-message-body > [data-rpc-head] > [data-rpc-lead] > :not(svg) {
+.rpg-chat-area[data-chat-mode="roleplay"][data-roleplay-presentation="classic"] .mari-roleplay-message-body > [data-rpc-head] > [data-rpc-lead] > :not(svg, button) {
   display: none;
 }
 
@@ -5746,7 +5750,7 @@ html[data-malang-ui] [data-malang-library] :is([data-malang-row="actions"], [dat
   width: 1rem;
   height: 1rem;
 }
-html[data-malang-ui] [data-malang-library] > [data-malang-row="library"] > button > :not(svg):not(:has(svg)),
+html[data-malang-ui] [data-malang-library] > [data-malang-row="library"] > button > [data-ph-lib-label],
 html[data-malang-ui] [data-malang-library] > [data-malang-row="library"] > [data-ph-lib="personas"] {
   display: none !important;
 }
@@ -7323,7 +7327,8 @@ html[data-malang-ui] label { font-size: min(1em, 13px); }
 .mari-message-actions > [data-rpc-tucked] { display: none !important; }
 .mari-message-actions > .rpc-more { order: 19 !important; }
 .rpc-more[aria-pressed="true"] { color: var(--foreground); }
-.mari-message-actions[data-rpc-open] { position: relative; z-index: 30 !important; }
+.mari-roleplay-message-body > .mari-message-actions[data-rpc-open] { position: relative; z-index: 30 !important; }
+[data-ph-convo] .mari-message-actions[data-rpc-open] { z-index: 30; display: flex !important; visibility: visible !important; opacity: 1 !important; pointer-events: auto !important; }
 .rpc-more-panel { position: absolute; top: calc(100% + 0.375rem); right: 0; z-index: 40; width: calc(var(--rpc-cols) * 1.875rem + 0.375rem); height: calc(var(--rpc-rows) * 1.875rem + 0.375rem); border: 1px solid var(--border); border-radius: 0.5rem; background: var(--background); box-shadow: 0 6px 18px rgb(0 0 0 / 0.14); }
 .mari-message-actions > [data-rpc-float] { position: absolute !important; top: calc(100% + 0.625rem + var(--rpc-row) * 1.875rem); right: calc(0.25rem + (var(--rpc-cols) - 1 - var(--rpc-col)) * 1.875rem); z-index: 41; }
 .mari-message-actions > [data-rpc-float], .mari-message-actions > [data-rpc-float] button { width: 1.75rem !important; min-width: 1.75rem !important; height: 1.75rem !important; min-height: 1.75rem !important; }
@@ -7406,3 +7411,7 @@ html[data-malang-ui] :is([data-malang-library="lorebooks"] [data-touch-drag-card
   html[data-malang-ui] [data-malang-library] [data-folder-actions] button { min-width: 22px !important; min-height: 22px !important; width: 22px; height: 22px; padding: 4px !important; }
   html[data-malang-ui] [data-malang-library] [data-folder-actions] button svg { width: 12px; height: 12px; }
 }
+html[data-malang-ui] [data-ph-convo] [data-ph-convo-hidden] { width: fit-content; max-width: 100%; padding: 0.375rem 0.875rem !important; border: 1px dashed color-mix(in oklch, var(--cv-ink) 28%, transparent) !important; border-radius: 1.125rem !important; background: color-mix(in oklch, var(--cv-bubble) 70%, transparent) !important; color: color-mix(in oklch, var(--cv-ink) 70%, transparent) !important; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+[data-ph-convo] [data-message-role="assistant"] .rpc-more-panel { right: auto; left: 0; }
+[data-ph-convo] [data-message-role="assistant"] .mari-message-actions > [data-rpc-float] { right: auto; left: calc(0.25rem + var(--rpc-col) * 1.875rem); }
+[data-ph-convo] [data-ph-convo-hidden-row] { box-shadow: none !important; }
