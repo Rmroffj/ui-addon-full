@@ -1786,6 +1786,7 @@ const chatName = h("span.mari-ph-chat-name");
 
 function decorateTopbar(topbar) {
   mountReferenceNav(topbar);
+  if (document.documentElement.dataset.malangUi !== undefined) ensureWidgetHandle();
   const left = topbar?.querySelector(LEFT_CONTROLS_SELECTOR);
   if (!left) return;
   if (!left.querySelector(":scope > .mari-ph-brand")) {
@@ -2318,8 +2319,46 @@ function mountReferenceNav(topbar) {
     referenceMobileButtons.set(key,button); shortcuts.append(button);
   }
   topbar.querySelector('.scrapbook-brand').after(shortcuts);
-  if (!document.querySelector('.scrapbook-widget-handle')) document.body.append(
-    h('button.scrapbook-widget-handle',{type:'button','aria-label':'위젯',onClick:openWidgets},'‹'));
+  ensureWidgetHandle();
+}
+function ensureWidgetHandle() {
+  if (document.querySelector('.scrapbook-widget-handle')) return;
+  const handle = h('button.scrapbook-widget-handle', { type: 'button', 'aria-label': '위젯' }, '‹');
+  const saved = Number(localStorage.getItem('scrapbook-widget-handle-top'));
+  if (saved > 0 && saved < 1) handle.style.top = `${saved * 100}%`;
+  let drag = null;
+  let dragged = false;
+  handle.addEventListener('pointerdown', (event) => {
+    if (event.button !== 0) return;
+    const rect = handle.getBoundingClientRect();
+    drag = { id: event.pointerId, y: event.clientY, center: rect.top + rect.height / 2, moved: false };
+    dragged = false;
+    try { handle.setPointerCapture(event.pointerId); } catch {}
+  });
+  handle.addEventListener('pointermove', (event) => {
+    if (!drag || event.pointerId !== drag.id) return;
+    const dy = event.clientY - drag.y;
+    if (!drag.moved && Math.abs(dy) < 6) return;
+    drag.moved = true;
+    const half = handle.offsetHeight / 2 + 8;
+    const center = Math.min(Math.max(drag.center + dy, half), window.innerHeight - half);
+    handle.style.top = `${(center / window.innerHeight) * 100}%`;
+  });
+  const end = (event) => {
+    if (!drag || event.pointerId !== drag.id) return;
+    if (drag.moved) {
+      dragged = true;
+      try { localStorage.setItem('scrapbook-widget-handle-top', String(parseFloat(handle.style.top) / 100)); } catch {}
+    }
+    drag = null;
+  };
+  handle.addEventListener('pointerup', end);
+  handle.addEventListener('pointercancel', end);
+  handle.addEventListener('click', () => {
+    if (dragged) dragged = false;
+    else openWidgets();
+  });
+  document.body.append(handle);
 }
 const chatVeil = h('div.scrapbook-chat-veil',{'aria-hidden':'true',onClick:()=>findStores().ui?.getState().setSidebarOpen(false)});
 function syncReferencePage(state, activeChatId, detail) {
@@ -3357,6 +3396,7 @@ const pageMounts = new MutationObserver((records) => {
     }
   }
   if (scrapbookSettings.caught.length) queueCaught();
+  if (!document.querySelector('.scrapbook-widget-handle') && document.querySelector('.scrapbook-header')) ensureWidgetHandle();
 });
 pageMounts.observe(document.body, { childList: true, subtree: true });
 hubTabs();
@@ -4013,7 +4053,7 @@ const CATCH_EVENTS = ["pointerdown", "pointerup", "mousedown", "mouseup", "touch
 
 function catchTarget(event) {
   const node = event.target instanceof Element ? event.target.closest('button, [role="button"]') : null;
-  return node && !node.closest(".mari-ph-catch-bar, .mari-ph-widgets") ? node : null;
+  return node && !node.closest(".mari-ph-catch-bar, .mari-ph-widgets, .scrapbook-widget-handle") ? node : null;
 }
 
 function onCatchEvent(event) {

@@ -6721,7 +6721,8 @@ html[data-malang-ui] .mari-topbar > :not(.scrapbook-header) { display:none !impo
 .scrapbook-nav-actions button { display:flex; align-items:center; justify-content:center; width:36px; height:36px; color:var(--ph-ink); }
 .scrapbook-nav-actions .scrapbook-mobile-menu { display:none; }
 .scrapbook-header button:focus-visible { outline:2px solid var(--ph-accent); outline-offset:2px; }
-.scrapbook-widget-handle { position:fixed; z-index:40; right:0; top:50%; transform:translateY(-50%); width:14px; height:64px; border:1px solid var(--ph-line); border-radius:12px 0 0 12px; background:var(--ph-paper); color:var(--ph-mute); }
+.scrapbook-widget-handle { position:fixed; z-index:40; right:0; top:50%; transform:translateY(-50%); width:20px; height:64px; border:1px solid var(--ph-line); border-radius:12px 0 0 12px; background:var(--ph-paper); color:var(--ph-mute); touch-action:none; user-select:none; cursor:grab; }
+@media (min-width: 768px) { .scrapbook-widget-handle { width:24px; height:88px; font-size:18px; } }
 .scrapbook-bottom-nav { display:none; }
 html[data-malang-ui] .mari-topbar,
 html[data-malang-ui][data-malang-page] :is([data-component="RightPanelDesktop"],[data-component="RightPanelMobile"],[data-component="RightPanel"]) { background:var(--background); }
