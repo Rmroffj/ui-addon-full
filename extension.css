@@ -7309,11 +7309,12 @@ html[data-malang-ui] [data-malang-library="agents"] > [data-malang-row="agent-ru
 html[data-theme="light"] { --ph-point: var(--ph-user-point-light); --ph-dialogue: var(--ph-user-dialogue-light); }
 html[data-theme="dark"] { --ph-point: var(--ph-user-point-dark); --ph-dialogue: var(--ph-user-dialogue-dark); }
 @layer base {
-  html[data-malang-ui] :is(input, textarea, select, button, label) { font-size: 15px; }
-  @media (max-width: 639px) { html[data-malang-ui] :is(input, textarea, select, button, label) { font-size: 14px; } }
+  html[data-malang-ui] :is(input, textarea, select, button) { font-size: 14px; }
+  @media (max-width: 639px) { html[data-malang-ui] :is(input, textarea, select, button) { font-size: 13px; } }
 }
-@media (pointer: coarse) { html[data-malang-ui] :is(input, textarea, select) { font-size: 15px; } }
-@media (pointer: coarse) and (max-width: 639px) { html[data-malang-ui] :is(input, textarea, select) { font-size: 14px; } }
+@media (pointer: coarse) { html[data-malang-ui] :is(input, textarea, select) { font-size: 14px; } }
+@media (pointer: coarse) and (max-width: 639px) { html[data-malang-ui] :is(input, textarea, select) { font-size: 13px; } }
+html[data-malang-ui] label { font-size: min(1em, 13px); }
 @media (max-width: 639px) {
   html[data-malang-ui] .mari-ph-page-title h2 { display: none; }
   html[data-malang-ui] .mari-ph-page-title > .mari-ph-page-title-ko { align-self: center; padding-bottom: 0; font: 600 1.25rem/1.2 var(--ph-kr); }
