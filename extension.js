@@ -2135,7 +2135,7 @@ function onHomeTab(event) {
 }
 
 const PAGE_TITLES = {
-  characters: [4, "CHARACTER", "캐릭터"],
+  characters: [3, "CHARACTER", "캐릭터"],
   personas: [4, "PERSONA", "페르소나"],
   lorebooks: [5, "LOREBOOK", "로어북"],
   presets: [6, "PRESET", "프리셋"],
