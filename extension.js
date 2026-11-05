@@ -26,6 +26,8 @@ classifyLibrary = guard("library", classifyLibrary);
 decorateCharacterCard = guard("library", decorateCharacterCard);
 decorateCharacterFolder = guard("library", decorateCharacterFolder);
 decoratePersona = guard("library", decoratePersona);
+syncPagedCharacters = guard("library", syncPagedCharacters);
+onPagedClick = guard("library", onPagedClick);
 onLibraryKey = guard("library", onLibraryKey);
 onLibraryClick = guard("library", onLibraryClick);
 onCoverClick = guard("library", onCoverClick);
@@ -2954,6 +2956,9 @@ const PLAIN_LISTS = new Set(["presets", "connections", "agents"]);
 const AGENT_MODE_LABELS = { All: "전체", Conversation: "대화", Roleplay: "롤플", Game: "게임" };
 const LIBRARY_ICONS = {
   back: '<path d="m15 18-6-6 6-6"/>',
+  next: '<path d="m9 18 6-6-6-6"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
   pencil: '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/>',
   trash: '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>',
   hash: '<line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/><line x1="10" x2="8" y1="3" y2="21"/><line x1="16" x2="14" y1="3" y2="21"/>',
@@ -2989,7 +2994,7 @@ function libraryRootOf(node) {
 }
 
 function rowKind(row) {
-  if (row.matches(".mari-ph-folder-bar, .mari-ph-tabs")) return null;
+  if (row.matches(".mari-ph-folder-bar, .mari-ph-tabs, .mari-ph-char-pager, [data-ph-paged-grid], [data-ph-paged-tags], .mari-ph-pick-bar")) return null;
   if (row.matches("input")) return "hidden";
   if (row.parentElement?.dataset.malangLibrary === "agents") {
     if (row.matches("button") && row.querySelector(".lucide-sparkles")) return "agent-download";
@@ -3044,6 +3049,7 @@ function classifyLibrary(root) {
   if (kind === "characters") {
     folderBarOf(root);
     syncFolderBar(root);
+    syncPagedCharacters(root);
     for (const card of root.querySelectorAll('[data-touch-drag-card="character"]')) tagCard(card, characterMeta?.get(card.dataset.dragId)?.name);
   }
   if (kind === "presets") presetTabsOf(root);
@@ -3065,6 +3071,337 @@ function classifyLibrary(root) {
 }
 
 let characterMeta = null;
+let characterCatalog = null;
+let pagedPage = 0;
+let pagedFilter = "";
+let pagedDrawn = "";
+let pagedPicked = new Set();
+let pagedUnsubscribe = null;
+let pagedResize = null;
+marinara.onCleanup(() => {
+  pagedUnsubscribe?.();
+  pagedResize?.disconnect();
+  document.removeEventListener("click", onPagedClick, true);
+});
+document.addEventListener("click", onPagedClick, true);
+
+function matchText(value) {
+  return String(value ?? "").normalize("NFKC").toLowerCase();
+}
+
+function pagedUiKeys() {
+  return ["characterPanelSearch", "characterPanelIncludedTags", "characterPanelExcludedTags", "characterPanelFavoriteFilter", "characterLibrarySort"];
+}
+
+function pagedGroups() {
+  return (findQueryClient()?.getQueryData(["character-groups"]) ?? []).map((group) => {
+    let ids = [];
+    try { ids = JSON.parse(group.characterIds); } catch {}
+    return { id: group.id, ids: Array.isArray(ids) ? ids : [] };
+  });
+}
+
+function pagedCharacters(ui, folderId) {
+  const excluded = new Set((ui.characterPanelExcludedTags ?? []).map(matchText));
+  const query = String(ui.characterPanelSearch ?? "").replace(/(?:^|\s)(?:-|!)(?:tag:|#)?(?:"([^"]+)"|(\S+))/gi, (_match, quoted, bare) => {
+    const tag = (quoted ?? bare ?? "").trim();
+    if (tag) excluded.add(matchText(tag));
+    return " ";
+  });
+  const text = matchText(query.replace(/\s+/g, " ").trim());
+  const included = (ui.characterPanelIncludedTags ?? []).map(matchText);
+  const favorite = ui.characterPanelFavoriteFilter ?? "all";
+  const groups = pagedGroups();
+  const foldered = new Set(groups.flatMap((group) => group.ids));
+  const folder = folderId === undefined ? null : new Set(groups.find((group) => group.id === folderId)?.ids ?? []);
+  const hits = new Map();
+  const list = characterCatalog.filter((character) => {
+    if (folder ? !folder.has(character.id) : foldered.has(character.id)) return false;
+    if (favorite === "favorites" && !character.favorite) return false;
+    if (favorite === "non-favorites" && character.favorite) return false;
+    const tags = (character.tags ?? []).map(matchText);
+    const hit = included.filter((tag) => tags.includes(tag)).length;
+    if (included.length && !hit) return false;
+    if (tags.some((tag) => excluded.has(tag))) return false;
+    hits.set(character.id, hit);
+    if (!text) return true;
+    const meta = [character.creator, character.version ? `v${character.version}` : ""].filter(Boolean).join(" · ");
+    return [character.name, character.comment, meta, character.summary, character.creatorNotes, ...tags, character.description, character.personality, character.scenario, character.firstMessage]
+      .some((value) => matchText(value).includes(text));
+  });
+  const sort = ui.characterLibrarySort ?? "name-asc";
+  const byName = (a, b) => (a.name ?? "").localeCompare(b.name ?? "");
+  const order = {
+    "name-asc": byName,
+    "name-desc": (a, b) => byName(b, a),
+    newest: (a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""),
+    oldest: (a, b) => (a.createdAt ?? "").localeCompare(b.createdAt ?? ""),
+  }[sort] ?? byName;
+  return list.sort((a, b) =>
+    (sort === "favorites" ? Number(b.favorite) - Number(a.favorite) : 0)
+    || (included.length ? hits.get(b.id) - hits.get(a.id) : 0)
+    || order(a, b));
+}
+
+function pagedSelection(root) {
+  const key = Object.keys(root).find((name) => name.startsWith("__reactFiber$"));
+  for (let fiber = key ? root[key] : null; fiber; fiber = fiber.return) {
+    if (typeof fiber.type !== "function") continue;
+    for (let hook = fiber.memoizedState; hook; hook = hook.next) {
+      if (hook.memoizedState instanceof Set && typeof hook.queue?.dispatch === "function") return hook.queue.dispatch;
+    }
+  }
+  return null;
+}
+
+function pagedRows(root) {
+  const headings = [...root.children].filter((child) => child.dataset.malangRow === "heading");
+  const heading = headings[headings.length - 1];
+  if (!heading) return null;
+  const hidden = [];
+  let main = null;
+  for (let node = heading.nextElementSibling; node; node = node.nextElementSibling) {
+    if (node.matches("[data-ph-paged-grid], .mari-ph-char-pager, .mari-ph-pick-bar, [data-character-folder-root]")) continue;
+    hidden.push(node);
+    if (node.dataset.malangRow === "cards" || node.children.length === 0) {
+      main = node;
+      break;
+    }
+  }
+  if (!main) return null;
+  for (let node = main.nextElementSibling; node; node = node.nextElementSibling) {
+    if (node.matches(".mari-selection-action-bar, [data-ph-paged-grid], .mari-ph-char-pager, .mari-ph-pick-bar")) continue;
+    if (node.children.length === 1 && node.firstElementChild.tagName === "BUTTON") hidden.push(node);
+  }
+  return { main, hidden };
+}
+
+function pagedCard(character, selecting, picked) {
+  const name = character.name || "Unnamed";
+  return h(
+    "div",
+    {
+      "data-character-id": character.id,
+      "data-touch-drag-card": "character",
+      "data-drag-id": character.id,
+      tabIndex: 0,
+      "aria-label": name,
+    },
+    selecting
+      ? h("button", { type: "button", "data-ph-paged-pick": "", "aria-pressed": String(picked), "aria-label": picked ? "선택 해제" : "캐릭터 선택" }, picked ? libraryIcon("check", 12) : null)
+      : null,
+    h(
+      "div.mari-avatar-placeholder.mari-avatar-placeholder--character",
+      null,
+      character.avatarPath ? h("div", null, avatarImage(character.avatarPath, character.avatarCrop, "mari-ph-paged-img")) : null,
+      character.favorite ? h("div", { "data-character-favorite-indicator": "panel", "aria-hidden": "true" }) : null,
+    ),
+    h("div", null, h("div", { "data-character-row-name": "true" }, name)),
+  );
+}
+
+function pagedGo(root, page) {
+  pagedPage = page;
+  queueLibrary(root);
+  root.scrollTo({ top: 0 });
+}
+
+function pagedPager(root, page, pages) {
+  const shown = [...new Set([0, page - 2, page - 1, page, page + 1, page + 2, pages - 1])]
+    .filter((index) => index >= 0 && index < pages)
+    .sort((a, b) => a - b);
+  const items = [];
+  shown.forEach((index, at) => {
+    if (at && index - shown[at - 1] > 1) items.push(h("span", { "aria-hidden": "true" }, "…"));
+    items.push(h("button", {
+      type: "button",
+      "aria-label": `${index + 1}페이지`,
+      "aria-current": index === page ? "page" : null,
+      onClick: () => pagedGo(root, index),
+    }, String(index + 1)));
+  });
+  const step = (delta, label, glyph) => h("button", {
+    type: "button",
+    "aria-label": label,
+    disabled: page + delta < 0 || page + delta >= pages,
+    onClick: () => pagedGo(root, page + delta),
+  }, libraryIcon(glyph, 14));
+  return [step(-1, "이전 페이지", "back"), ...items, step(1, "다음 페이지", "next")];
+}
+
+function pagedToggleTag(tag) {
+  const state = findStores().ui?.getState();
+  if (!state) return;
+  const included = new Set(state.characterPanelIncludedTags ?? []);
+  if (included.has(tag)) included.delete(tag);
+  else included.add(tag);
+  state.setCharacterPanelIncludedTags([...included]);
+  const excluded = state.characterPanelExcludedTags ?? [];
+  if (excluded.includes(tag)) state.setCharacterPanelExcludedTags(excluded.filter((value) => value !== tag));
+}
+
+async function pagedDeleteTag(tag) {
+  if (!window.confirm(`'${tag}' 태그를 모든 캐릭터에서 삭제하시겠습니까?`)) return;
+  const affected = (characterCatalog ?? []).filter((character) => (character.tags ?? []).includes(tag));
+  let failed = 0;
+  for (const character of affected) {
+    const response = await marinara.fetch(`/api/characters/${encodeURIComponent(character.id)}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ data: { tags: character.tags.filter((value) => value !== tag) } }),
+    }).catch(() => null);
+    if (!response?.ok) failed++;
+  }
+  const state = findStores().ui?.getState();
+  if (state?.characterPanelIncludedTags?.includes(tag)) state.setCharacterPanelIncludedTags(state.characterPanelIncludedTags.filter((value) => value !== tag));
+  if (state?.characterPanelExcludedTags?.includes(tag)) state.setCharacterPanelExcludedTags(state.characterPanelExcludedTags.filter((value) => value !== tag));
+  void findQueryClient()?.invalidateQueries({ queryKey: ["characters"] });
+  if (failed) window.alert(`캐릭터 ${failed}개에서 태그를 삭제하지 못했습니다.`);
+}
+
+function syncPagedTags(root, state) {
+  const toggle = [...root.querySelectorAll("button[aria-expanded]")].find((button) => button.querySelector(".lucide-tag"));
+  const host = toggle?.parentElement;
+  let row = root.querySelector(":scope > [data-ph-paged-tags]");
+  if (host?.parentElement !== root) return void row?.remove();
+  const tags = [...new Set(characterCatalog.flatMap((character) => character.tags ?? []))].sort((a, b) => a.localeCompare(b));
+  const label = [...toggle.childNodes].find((node) => node.nodeType === Node.TEXT_NODE && /\d/.test(node.nodeValue));
+  const count = label?.nodeValue.replace(/\d+/, String(tags.length));
+  if (label && count !== label.nodeValue) label.nodeValue = count;
+  for (const child of root.children) {
+    if (child !== row && !child.matches("[data-ph-paged-grid]") && child.querySelector(":scope > .mari-chrome-control > button[aria-pressed]") && child.dataset.phPagedOff === undefined) child.dataset.phPagedOff = "";
+  }
+  row ??= h("div.mari-ph-tagrow", { "data-ph-paged-tags": "" });
+  if (host.nextElementSibling !== row) host.after(row);
+  const included = state.characterPanelIncludedTags ?? [];
+  const excluded = state.characterPanelExcludedTags ?? [];
+  const open = Boolean(state.characterPanelTagsExpanded) && tags.length > 0;
+  row.hidden = !open;
+  const key = JSON.stringify([open, tags, included, excluded]);
+  if (row.dataset.drawn === key) return;
+  row.dataset.drawn = key;
+  if (!open) return void row.replaceChildren();
+  const clear = included.length || excluded.length
+    ? h("button", {
+      type: "button",
+      className: "mari-ph-tag-clear",
+      onClick: () => {
+        const ui = findStores().ui?.getState();
+        ui?.setCharacterPanelIncludedTags([]);
+        ui?.setCharacterPanelExcludedTags([]);
+      },
+    }, libraryIcon("x", 10), "지우기")
+    : null;
+  row.replaceChildren(clear ?? "", ...tags.map((tag) => {
+    const on = included.includes(tag);
+    const off = excluded.includes(tag);
+    return h(
+      "div",
+      { className: "mari-ph-tag", "data-state": on ? "on" : off ? "off" : null },
+      h("button", { type: "button", "aria-pressed": String(on), onClick: () => pagedToggleTag(tag) }, tag),
+      h("button", {
+        type: "button",
+        "aria-label": `${tag} 태그 삭제`,
+        onClick: (event) => {
+          event.stopPropagation();
+          void pagedDeleteTag(tag);
+        },
+      }, libraryIcon("x", 8)),
+    );
+  }));
+}
+
+function syncPagedCharacters(root) {
+  const rows = pagedRows(root);
+  if (!rows) return;
+  if (!characterCatalog) return void loadCharacterMeta();
+  const ui = findStores().ui;
+  const keys = pagedUiKeys();
+  if (!pagedUnsubscribe && ui) {
+    pagedUnsubscribe = ui.subscribe((state, previous) => {
+      if ([...keys, "characterPanelTagsExpanded"].some((key) => state[key] !== previous[key])) document.querySelectorAll(CHARACTERS_ROOT_SELECTOR).forEach(queueLibrary);
+    });
+  }
+  pagedResize ??= new ResizeObserver((entries) => entries.forEach((entry) => queueLibrary(entry.target)));
+  if (root.dataset.phPagedSized === undefined) {
+    root.dataset.phPagedSized = "";
+    pagedResize.observe(root);
+  }
+  const state = ui?.getState() ?? {};
+  const selecting = Boolean(root.querySelector(":scope > .mari-selection-action-bar"));
+  if (!selecting) pagedPicked.clear();
+  syncPagedTags(root, state);
+  const folderId = root.dataset.malangOpenFolder;
+  const list = pagedCharacters(state, folderId);
+  const filter = [folderId ?? "", ...keys.map((key) => JSON.stringify(state[key] ?? ""))].join("|");
+  if (filter !== pagedFilter) {
+    pagedFilter = filter;
+    pagedPage = 0;
+  }
+  let grid = root.querySelector(":scope > [data-ph-paged-grid]");
+  let pager = root.querySelector(":scope > .mari-ph-char-pager");
+  let bar = root.querySelector(":scope > .mari-ph-pick-bar");
+  grid ??= h("div", { "data-ph-paged-grid": "", "data-malang-gallery": "" });
+  pager ??= h("nav.mari-ph-char-pager", { "aria-label": "페이지" });
+  if (selecting) bar ??= h("div.mari-ph-pick-bar");
+  else bar?.remove();
+  let previous = rows.main;
+  for (const node of [selecting ? bar : null, grid, pager]) {
+    if (!node) continue;
+    if (previous.nextElementSibling !== node) previous.after(node);
+    previous = node;
+  }
+  const sample = grid.firstElementChild ?? rows.main.firstElementChild;
+  const columns = Math.max(1, Number.parseInt(sample ? getComputedStyle(sample).getPropertyValue("--ph-cols") : "", 10) || 2);
+  const allFolders = [...root.querySelectorAll("[data-character-folder-id]")].filter((folder) => folder.querySelector(':scope > [role="button"]'));
+  const folders = folderId === undefined ? allFolders : [];
+  const perPage = Math.ceil(24 / columns) * columns;
+  const pages = Math.max(1, Math.ceil((folders.length + list.length) / perPage));
+  pagedPage = Math.min(Math.max(0, pagedPage), pages - 1);
+  const from = pagedPage * perPage;
+  allFolders.forEach((folder, index) => toggleMark(folder, "data-ph-paged-away", folderId === undefined && (index < from || index >= from + perPage)));
+  const slice = list.slice(Math.max(0, from - folders.length), Math.max(0, from + perPage - folders.length));
+  for (const node of rows.hidden) if (node.dataset.phPagedOff === undefined) node.dataset.phPagedOff = "";
+  if (root.dataset.phPaged === undefined) root.dataset.phPaged = "";
+  delete grid.dataset.phPagedOff;
+  const drawn = [characterMetaAt, selecting, [...pagedPicked].join(","), pagedPage, pages, slice.map((character) => character.id).join(",")].join("|");
+  if (drawn === pagedDrawn && grid.childElementCount === slice.length && (!selecting || bar.childElementCount)) return;
+  pagedDrawn = drawn;
+  grid.replaceChildren(...slice.map((character) => pagedCard(character, selecting, pagedPicked.has(character.id))));
+  grid.querySelectorAll("[data-character-id]").forEach(decorateCharacterCard);
+  pager.replaceChildren(...(pages > 1 ? pagedPager(root, pagedPage, pages) : []));
+  if (!selecting) return;
+  const ids = slice.map((character) => character.id);
+  const all = ids.length > 0 && ids.every((id) => pagedPicked.has(id));
+  bar.replaceChildren(h("button", {
+    type: "button",
+    "aria-pressed": String(all),
+    disabled: !ids.length,
+    onClick: () => {
+      for (const id of ids) {
+        if (all) pagedPicked.delete(id);
+        else pagedPicked.add(id);
+      }
+      pagedSelection(root)?.(new Set(pagedPicked));
+      queueLibrary(root);
+    },
+  }, libraryIcon("check", 12), "전체"));
+}
+
+function onPagedClick(event) {
+  const card = event.target.closest?.("[data-ph-paged-grid] > [data-character-id]");
+  if (!card?.querySelector(":scope > [data-ph-paged-pick]")) return;
+  const root = card.closest(CHARACTERS_ROOT_SELECTOR);
+  const dispatch = root && pagedSelection(root);
+  if (!dispatch) return;
+  event.preventDefault();
+  event.stopPropagation();
+  const id = card.dataset.characterId;
+  if (pagedPicked.has(id)) pagedPicked.delete(id);
+  else pagedPicked.add(id);
+  dispatch(new Set(pagedPicked));
+  queueLibrary(root);
+}
 let characterMetaAt = 0;
 let characterMetaLoading = null;
 
@@ -3090,6 +3427,8 @@ function loadCharacterMeta() {
         ]),
       );
       characterMetaAt = Date.now();
+      characterCatalog = catalog;
+      document.querySelectorAll(CHARACTERS_ROOT_SELECTOR).forEach(queueLibrary);
       document.querySelectorAll(CHARACTER_CARD_SELECTOR).forEach(decorateCharacterCard);
       document.querySelectorAll(CHARACTER_FOLDER_HEAD_SELECTOR).forEach(decorateCharacterFolder);
     })
@@ -4065,7 +4404,7 @@ function settingsView() {
       "section.mari-ph-setting-group",
       null,
       h("h3", null, "메시지 도구"),
-      h("p", null, toolCount ? "더보기 밖에 꺼내 둘 버튼과 순서를 정하세요." : "설정하기 위해 먼저 채팅방을 여세요."),
+      h("p", null, toolCount ? "더보기 밖에 꺼내 둘 버튼과 순서를 정하세요." : "채팅을 열면 그 채팅의 메시지 버튼이 여기에 나타납니다."),
       checks,
     ),
   );
