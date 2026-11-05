@@ -6343,6 +6343,9 @@ html[data-malang-ui][data-malang-page] [data-malang-library] > .mari-selection-a
   border-top: 1px solid var(--ph-line);
   background: var(--ph-paper);
 }
+html[data-malang-ui][data-malang-page] [data-malang-library="characters"] > .mari-selection-action-bar {
+  bottom: -2rem;
+}
 html[data-malang-ui][data-malang-page] [data-malang-library] > [data-malang-row="bar-spacer"] {
   display: none;
 }

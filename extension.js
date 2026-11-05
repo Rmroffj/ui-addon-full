@@ -3062,7 +3062,7 @@ function classifyLibrary(root) {
       for (const child of card.children) {
         const actions = child.tagName === "DIV" && Boolean(child.querySelector(".lucide-trash-2, .lucide-trash2"));
         setFlag(child, "phLoreActions", actions);
-        setFlag(child, "phLoreText", child.tagName === "DIV" && !actions);
+        setFlag(child, "phLoreText", child.tagName === "DIV" && child.classList.contains("flex-1") && !actions);
       }
     }
   }
