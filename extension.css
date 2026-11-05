@@ -6333,7 +6333,7 @@ html[data-malang-ui] [data-malang-gallery] > [data-ph-card-picked] {
 html[data-malang-ui][data-malang-page] [data-malang-library] > .mari-selection-action-bar {
   position: sticky;
   right: auto;
-  bottom: -2rem;
+  bottom: 0;
   z-index: 20;
   order: 100;
   flex: 1 1 100%;

@@ -1674,7 +1674,9 @@ function archiveSection(number, characters) {
     state.previewLimit = limit;
     render();
   };
-  new ResizeObserver(measure).observe(covers);
+  const archiveObserver = new ResizeObserver(measure);
+  homeRowObservers.add(archiveObserver);
+  archiveObserver.observe(covers);
 
   render();
   return h(
@@ -3447,9 +3449,8 @@ function decorateCharacterCard(card) {
   }
   const id = card.dataset.characterId ?? card.dataset.dragId;
   const meta = id && characterMeta?.get(id);
-  tagCard(card, meta?.name);
+  const { text, title } = tagCard(card, meta?.name);
   if (!meta) return void loadCharacterMeta();
-  const { text, title } = tagCard(card, meta.name);
   if (text && title) {
     let line = text.querySelector(":scope > .mari-ph-card-line");
     if (!line) {
@@ -3840,6 +3841,7 @@ function editorParts(editor) {
 }
 
 function toggleMark(node, name, on) {
+  if (node.hasAttribute(name) === Boolean(on)) return;
   if (on) node.setAttribute(name, "");
   else node.removeAttribute(name);
 }
