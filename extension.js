@@ -796,7 +796,7 @@ const MESSAGE_TOOLS = [
   ["delete", "삭제", ["lucide-trash-2"]],
 ];
 const SETTINGS_KEY = "scrapbookSettings";
-const settingsDefaults = () => ({ point: { light: "", dark: "" }, dialogue: { light: "", dark: "" }, tools: ["edit"], caught: [] });
+const settingsDefaults = () => ({ point: { light: "", dark: "" }, dialogue: { light: "", dark: "" }, tools: ["edit"], tucked: [], order: [], caught: [] });
 let scrapbookSettings = settingsDefaults();
 let caughtNodes = new Set();
 let caughtFrame = 0;
@@ -816,9 +816,43 @@ function closeToolBars(event) {
   if (!document.querySelector(".mari-message-actions[data-rpc-open]")) document.removeEventListener("pointerdown", closeToolBars, true);
 }
 
+function toolOf(action) {
+  const classes = [...(action.querySelector("svg")?.classList ?? [])];
+  const known = MESSAGE_TOOLS.find(([, , icons]) => icons.some((name) => classes.includes(name)));
+  if (known) return { key: known[0], label: known[1] };
+  if (!action.matches("button, a, [role='button']")) return null;
+  const label = (action.getAttribute("aria-label") || action.getAttribute("title") || action.textContent || "").trim().slice(0, 40);
+  const icon = classes.find((name) => name.startsWith("lucide-"));
+  if (icon) return { key: `icon:${icon}`, label: label || icon.slice(7) };
+  return label ? { key: `label:${label}`, label } : null;
+}
+
+function toolFolded(key) {
+  return key.includes(":") ? scrapbookSettings.tucked.includes(key) : !scrapbookSettings.tools.includes(key);
+}
+
+function toolRank(key) {
+  const saved = scrapbookSettings.order.indexOf(key);
+  if (saved >= 0) return saved;
+  const known = MESSAGE_TOOLS.findIndex(([tool]) => tool === key);
+  return scrapbookSettings.order.length + (known >= 0 ? known : MESSAGE_TOOLS.length);
+}
+
+function chatTools() {
+  const found = new Map();
+  for (const bar of document.querySelectorAll(".mari-message-actions")) {
+    if (!bar.querySelector(":scope > [data-rpc-order]")) continue;
+    for (const action of bar.children) {
+      if (action.matches(".rpc-more, .rpc-more-panel")) continue;
+      const tool = toolOf(action);
+      if (tool && !found.has(tool.key)) found.set(tool.key, tool.label);
+    }
+  }
+  return [...found].sort(([a], [b]) => toolRank(a) - toolRank(b));
+}
+
 function orderActions(actions) {
   if (!actions) return;
-  const pinned = new Set(scrapbookSettings.tools);
   let open = openToolBars.has(actions);
   let more = null;
   let sample = null;
@@ -831,8 +865,11 @@ function orderActions(actions) {
     const classes = [...(action.querySelector("svg")?.classList ?? [])];
     const icon = classes.find((name) => ACTION_ORDER[name]);
     if (icon && action.dataset.rpcOrder !== String(ACTION_ORDER[icon])) action.dataset.rpcOrder = ACTION_ORDER[icon];
-    const tool = MESSAGE_TOOLS.find(([, , icons]) => icons.some((name) => classes.includes(name)))?.[0];
-    const fold = Boolean(tool) && !pinned.has(tool);
+    const tool = toolOf(action);
+    if (tool) action.dataset.rpcTool = tool.key;
+    if (tool && scrapbookSettings.order.length) action.style.setProperty("order", String(toolRank(tool.key) + 1), "important");
+    else action.style.removeProperty("order");
+    const fold = Boolean(tool) && toolFolded(tool.key);
     if (fold) folded.push(action);
     else {
       setFlag(action, "rpcTucked", false);
@@ -844,7 +881,7 @@ function orderActions(actions) {
     openToolBars.delete(actions);
     open = false;
   }
-  folded.sort((a, b) => Number(a.dataset.rpcOrder ?? 0) - Number(b.dataset.rpcOrder ?? 0));
+  folded.sort((a, b) => toolRank(a.dataset.rpcTool) - toolRank(b.dataset.rpcTool));
   const cols = Math.min(folded.length, 6);
   folded.forEach((action, index) => {
     setFlag(action, "rpcTucked", !open);
@@ -1901,11 +1938,14 @@ function toggleFoldMenu(button) {
 
 const WIDGET_SHORTCUTS = [{ key: "agents", label: "Agent", icon: "sparkles", onSelect: () => phoneMoves.panel("agents") }];
 
+ICONS.chevronUp = '<path d="m18 15-6-6-6 6"/>';
+ICONS.chevronDown = '<path d="m6 9 6 6 6-6"/>';
 ICONS.folderOpen =
   '<path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/>';
 
 const HUB_TAB_PREFIX = "marinara-home-tab-";
 let hubTabsSeen = [];
+let hubPackageTabs = [];
 let hubTabWanted = null;
 function hubTabs() {
   const list = document.querySelector('[data-component="HomeBrowserHub.TabList"]');
@@ -1914,7 +1954,21 @@ function hubTabs() {
       .map((tab) => ({ id: tab.id.slice(HUB_TAB_PREFIX.length), label: tab.getAttribute("aria-label") || tab.textContent.trim(), src: tab.querySelector("img")?.getAttribute("src") }))
       .filter((tab) => tab.id !== "home");
   }
-  return hubTabsSeen;
+  return hubTabsSeen.length ? hubTabsSeen : [{ id: "professor", label: "Mari", src: "/sprites/mari/basic/pose-profile.webp" }, ...hubPackageTabs];
+}
+function loadHubPackageTabs() {
+  readJson("/api/capability-packages/installed")
+    .then((packages) => {
+      hubPackageTabs = (Array.isArray(packages) ? packages : [])
+        .filter((pkg) => pkg.status === "active" && pkg.manifest?.contributions?.slots?.includes("home-browser-tab") && pkg.manifest.entrypoints?.client?.trim() && pkg.manifest.contributions.homeBrowserTab)
+        .map((pkg) => {
+          const tab = pkg.manifest.contributions.homeBrowserTab;
+          const path = tab.iconPaths?.[0];
+          const src = path ? `/api/capability-packages/${encodeURIComponent(pkg.id)}/assets/${path.split("/").map(encodeURIComponent).join("/")}?v=${encodeURIComponent(pkg.version)}` : null;
+          return { id: pkg.id, label: tab.label || pkg.id, src };
+        });
+    })
+    .catch((error) => marinara.log.warn("home tabs could not be read", error));
 }
 function settleHubTab(tries = 0) {
   const tab = document.getElementById(HUB_TAB_PREFIX + (hubTabWanted ?? "home"));
@@ -3408,6 +3462,7 @@ const pageMounts = new MutationObserver((records) => {
       dirtyRows.add(messageRow);
       flushLater();
     }
+    if (record.target.classList?.contains("mari-message-actions") && record.target.querySelector(":scope > [data-rpc-order]") && [...record.addedNodes].some((node) => node.nodeType === 1 && !node.matches(".rpc-more, .rpc-more-panel"))) orderActions(record.target);
     const loreRow = record.target.closest?.(LORE_ROW);
     if (loreRow) queueLoreRow(loreRow);
     const chromeHost = record.target.closest?.(CHROME_HOSTS);
@@ -3426,6 +3481,7 @@ const pageMounts = new MutationObserver((records) => {
 });
 pageMounts.observe(document.body, { childList: true, subtree: true });
 hubTabs();
+loadHubPackageTabs();
 marinara.onCleanup(() => pageMounts.disconnect());
 
 const EDITOR_DETAIL_SECTIONS = new Set(["metadata", "overview"]);
@@ -3861,6 +3917,8 @@ function normalizeSettings(value) {
   for (const group of ["point", "dialogue"]) for (const mode of ["light", "dark"]) settings[group][mode] = color(value[group]?.[mode]);
   const known = new Set(MESSAGE_TOOLS.map(([key]) => key));
   if (Array.isArray(value.tools)) settings.tools = value.tools.filter((key) => known.has(key));
+  if (Array.isArray(value.tucked)) settings.tucked = value.tucked.filter((key) => typeof key === "string" && /^(icon|label):./.test(key));
+  if (Array.isArray(value.order)) settings.order = [...new Set(value.order.filter((key) => typeof key === "string" && (known.has(key) || /^(icon|label):./.test(key))))];
   if (Array.isArray(value.caught)) {
     settings.caught = value.caught
       .filter((entry) => typeof entry?.selector === "string" && entry.selector)
@@ -3904,6 +3962,7 @@ marinara.onCleanup(() => {
   for (const group of ["point", "dialogue"]) for (const mode of ["light", "dark"]) document.documentElement.style.removeProperty(`--ph-user-${group}-${mode}`);
   document.querySelectorAll(".rpc-more").forEach((node) => node.remove());
   document.querySelectorAll("[data-rpc-tucked]").forEach((node) => delete node.dataset.rpcTucked);
+  document.querySelectorAll("[data-rpc-tool]").forEach((node) => { delete node.dataset.rpcTool; node.style.removeProperty("order"); });
   document.querySelectorAll("[data-rpc-float], [data-rpc-open]").forEach((node) => { delete node.dataset.rpcFloat; delete node.dataset.rpcOpen; });
   document.querySelectorAll(".rpc-more-panel").forEach((node) => node.remove());
   document.removeEventListener("pointerdown", closeToolBars, true);
@@ -3954,26 +4013,49 @@ function settingsView() {
   };
   const modeSection = (mode, name) =>
     h("section.mari-ph-setting-group", null, h("h3", null, name), colorRow("point", mode, "포인트 컬러"), colorRow("dialogue", mode, "대사 하이라이트"));
-  const pinned = new Set(scrapbookSettings.tools);
-  const tools = MESSAGE_TOOLS.map(([key, label]) =>
-    h(
-      "label.mari-ph-setting-check",
-      null,
-      h("input", {
-        type: "checkbox",
-        checked: pinned.has(key),
-        onChange: (event) => {
-          const next = new Set(scrapbookSettings.tools);
-          if (event.target.checked) next.add(key);
-          else next.delete(key);
-          scrapbookSettings.tools = MESSAGE_TOOLS.map(([tool]) => tool).filter((tool) => next.has(tool));
-          saveSettings();
-          syncAll();
-        },
-      }),
-      h("span", null, label),
-    ),
-  );
+  const checks = h("div.mari-ph-setting-checks");
+  const move = (shown, index, step) => {
+    const keys = shown.map(([key]) => key);
+    [keys[index], keys[index + step]] = [keys[index + step], keys[index]];
+    scrapbookSettings.order = [...keys, ...scrapbookSettings.order.filter((key) => !keys.includes(key))];
+    saveSettings();
+    syncAll();
+    renderTools();
+  };
+  const renderTools = () => {
+    const shown = chatTools();
+    checks.replaceChildren(
+      ...shown.map(([key, label], index) =>
+        h(
+          "div.mari-ph-setting-tool",
+          null,
+          h(
+            "label.mari-ph-setting-check",
+            null,
+            h("input", {
+              type: "checkbox",
+              checked: !toolFolded(key),
+              onChange: (event) => {
+                const custom = key.includes(":");
+                const list = new Set(custom ? scrapbookSettings.tucked : scrapbookSettings.tools);
+                if (event.target.checked !== custom) list.add(key);
+                else list.delete(key);
+                if (custom) scrapbookSettings.tucked = [...list];
+                else scrapbookSettings.tools = MESSAGE_TOOLS.map(([tool]) => tool).filter((tool) => list.has(tool));
+                saveSettings();
+                syncAll();
+              },
+            }),
+            h("span", null, label),
+          ),
+          h("button", { type: "button", "aria-label": `${label} 위로`, disabled: index === 0, onClick: () => move(shown, index, -1) }, icon("chevronUp", 16)),
+          h("button", { type: "button", "aria-label": `${label} 아래로`, disabled: index === shown.length - 1, onClick: () => move(shown, index, 1) }, icon("chevronDown", 16)),
+        ),
+      ),
+    );
+    return shown.length;
+  };
+  const toolCount = renderTools();
   return h(
     "div.mari-ph-settings",
     null,
@@ -3983,8 +4065,8 @@ function settingsView() {
       "section.mari-ph-setting-group",
       null,
       h("h3", null, "메시지 도구"),
-      h("p", null, "더보기 밖에 꺼내 둘 버튼을 고르세요."),
-      h("div.mari-ph-setting-checks", null, tools),
+      h("p", null, toolCount ? "더보기 밖에 꺼내 둘 버튼과 순서를 정하세요." : "채팅을 열면 그 채팅의 메시지 버튼이 여기에 나타납니다."),
+      checks,
     ),
   );
 }

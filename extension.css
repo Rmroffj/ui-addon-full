@@ -911,7 +911,7 @@ html[data-theme="dark"] {
   align-self: center;
   justify-self: end;
   margin-right: 0.75rem;
-  border: 1px solid var(--rpc-bar-ink);
+  border: 1px solid #fff;
   border-radius: 9999px;
   padding: 0.0625rem 0.4375rem;
   color: transparent;
@@ -920,7 +920,7 @@ html[data-theme="dark"] {
 
 .rpg-chat-area[data-chat-mode="roleplay"][data-roleplay-presentation="classic"] .mari-roleplay-message-body > [data-rpc-head] > [data-rpc-no]::before {
   content: "NO." attr(data-rpc-no);
-  color: var(--rpc-bar-ink);
+  color: #fff;
   font-size: 0.625rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -7348,22 +7348,26 @@ html[data-malang-ui] label { font-size: min(1em, 13px); }
 .mari-ph-widget-body { flex: 1; min-height: 0; overflow-y: auto; }
 .mari-ph-widget-note { padding: 0 1rem 1rem; color: var(--ph-mute); font-size: 0.75rem; }
 .mari-ph-widget-note:empty { display: none; }
-.mari-ph-widget-foot { display: flex; flex-shrink: 0; gap: 0.375rem; padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom)); border-top: 1.5px solid var(--ph-ink); }
-.mari-ph-widget-foot > button { flex: 1; height: 2.25rem; border: 1px solid var(--ph-ink); border-radius: 3px; color: var(--ph-ink); font: 400 0.8125rem/1 var(--ph-kr); }
+.mari-ph-widget-foot { display: flex; flex-shrink: 0; gap: 0.375rem; padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom)); border-top: 1px solid var(--ph-line); }
+.mari-ph-widget-foot > button { flex: 1; height: 2.25rem; border: 1px solid var(--ph-line); border-radius: 3px; color: var(--ph-ink); font: 400 0.8125rem/1 var(--ph-kr); }
 .mari-ph-widget-foot > button:hover { background: var(--ph-sheet); }
 .mari-ph-widget-tile:disabled { opacity: 0.35; }
 .mari-ph-widgets-panel[data-view="edit"] [data-widget-caught] > span { position: relative; border-color: var(--ph-ink); }
 .mari-ph-widgets-panel[data-view="edit"] [data-widget-caught] > span::after { content: "✕"; position: absolute; top: -0.375rem; right: -0.375rem; display: grid; place-items: center; width: 1.125rem; height: 1.125rem; border-radius: 50%; background: var(--ph-ink); color: var(--ph-paper); font-size: 0.625rem; }
 .mari-ph-settings { display: flex; flex-direction: column; gap: 1.25rem; padding: 1rem; }
-.mari-ph-setting-group > h3 { margin-bottom: 0.5rem; padding-bottom: 0.375rem; border-bottom: 1.5px solid var(--ph-ink); font: 900 0.8125rem/1.2 var(--ph-kr); }
+.mari-ph-setting-group > h3 { margin-bottom: 0.5rem; padding-bottom: 0.375rem; border-bottom: 1px solid var(--ph-line); font: 900 0.8125rem/1.2 var(--ph-kr); }
 .mari-ph-setting-group > p { margin-bottom: 0.5rem; color: var(--ph-mute); font-size: 0.75rem; }
 .mari-ph-setting-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.375rem 0; }
 .mari-ph-setting-row > span { flex: 1; font-size: 0.8125rem; }
 .mari-ph-setting-row small { margin-left: 0.375rem; color: var(--ph-mute); font-size: 0.6875rem; }
 .mari-ph-setting-row > input { width: 2.25rem; height: 1.75rem; padding: 0; border: 1px solid var(--ph-line); border-radius: 3px; background: none; }
 .mari-ph-setting-row > button { padding: 0.25rem 0.5rem; border: 1px solid var(--ph-line); border-radius: 3px; font-size: 0.75rem; }
-.mari-ph-setting-checks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.125rem 0.75rem; }
-.mari-ph-setting-check { display: flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0; font-size: 0.8125rem; }
+.mari-ph-setting-checks { display: flex; flex-direction: column; gap: 0.125rem; }
+.mari-ph-setting-tool { display: flex; align-items: center; gap: 0.25rem; }
+.mari-ph-setting-tool > button { display: grid; flex-shrink: 0; place-items: center; width: 1.75rem; height: 1.75rem; color: var(--ph-mute); }
+.mari-ph-setting-tool > button:hover:not(:disabled) { color: var(--ph-ink); }
+.mari-ph-setting-tool > button:disabled { opacity: 0.3; }
+.mari-ph-setting-check { display: flex; flex: 1; min-width: 0; align-items: center; gap: 0.5rem; padding: 0.25rem 0; font-size: 0.8125rem; }
 .mari-ph-setting-check > input { width: 1rem; height: 1rem; accent-color: var(--ph-accent); }
 
 [data-ph-caught] { display: none !important; }
