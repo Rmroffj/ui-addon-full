@@ -4065,7 +4065,7 @@ function settingsView() {
       "section.mari-ph-setting-group",
       null,
       h("h3", null, "메시지 도구"),
-      h("p", null, toolCount ? "더보기 밖에 꺼내 둘 버튼과 순서를 정하세요." : "채팅을 열면 그 채팅의 메시지 버튼이 여기에 나타납니다."),
+      h("p", null, toolCount ? "더보기 밖에 꺼내 둘 버튼과 순서를 정하세요." : "설정하기 위해 먼저 채팅방을 여세요."),
       checks,
     ),
   );
