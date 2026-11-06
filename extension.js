@@ -4849,8 +4849,9 @@ document.getElementById = function getElementById(id) {
   if (found && typeof id === "string" && /^settings-(section|control)-/.test(id)) revealSetting(found);
   return found;
 };
+const settingsChrome = document.getElementsByClassName("mari-settings-panel-chrome");
 const settingsMounts = new MutationObserver(() => {
-  if (document.querySelector(".mari-settings-panel-chrome")) queueSettings();
+  if (settingsChrome.length) queueSettings();
 });
 settingsMounts.observe(document.body, { childList: true, subtree: true });
 queueSettings();
