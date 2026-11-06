@@ -7503,7 +7503,8 @@ html[data-malang-ui] .mari-connection-scope .mari-connection-model-list {
   gap: 0.25rem;
 }
 html[data-malang-ui] .mari-connection-scope .mari-connection-model-well {
-  border-top: 1px solid var(--ph-line);
+  margin-left: 0.35rem;
+  border-left: 1px dotted var(--ph-accent);
   border-radius: 0 !important;
   background: transparent;
 }
