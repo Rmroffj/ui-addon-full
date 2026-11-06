@@ -46,6 +46,9 @@ syncConvo = guard("conversation", syncConvo);
 onConvoSeen = guard("conversation", onConvoSeen);
 syncCaught = guard("widgets", syncCaught);
 onCatchEvent = guard("widgets", onCatchEvent);
+syncSettingsMenu = guard("settings", syncSettingsMenu);
+revealSetting = guard("settings", revealSetting);
+onSettingsTab = guard("settings", onSettingsTab);
 marinara.onCleanup(() => delete document.documentElement.dataset.phFailed);
 const scrapbookBootTimer = marinara.setTimeout(() => document.documentElement.dataset.scrapbookReady = "", 10000);
 marinara.onCleanup(() => { marinara.clearTimeout(scrapbookBootTimer); delete document.documentElement.dataset.scrapbookReady; });
@@ -4694,3 +4697,166 @@ function syncRemote(area) {
 }
 syncRemote = guard("chat", syncRemote);
 marinara.onCleanup(() => document.querySelectorAll(".mari-ph-remote").forEach((node) => node.remove()));
+ICONS.chevronRight = '<path d="m9 18 6-6-6-6"/>';
+let settingsQueued = false;
+function queueSettings() {
+  if (settingsQueued) return;
+  settingsQueued = true;
+  requestAnimationFrame(() => {
+    settingsQueued = false;
+    syncSettingsMenu();
+  });
+}
+function syncSettingsMenu() {
+  for (const panel of document.querySelectorAll('.mari-settings-panel-chrome [role="tabpanel"]:not([hidden])')) drillPanel(panel);
+}
+function headLines(head, loose) {
+  const parts = [];
+  const walker = document.createTreeWalker(head, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    const text = node.nodeValue.trim();
+    const owner = node.parentElement;
+    if (!text || (!loose && owner.closest("button, a, label, select, textarea, [role='button']"))) continue;
+    const last = parts[parts.length - 1];
+    if (last && last.owner === owner) last.text += " " + text;
+    else parts.push({ owner, text });
+  }
+  const lines = parts.map((part) => part.text);
+  return lines.length || loose ? lines : headLines(head, true);
+}
+const DRILL_GROUP = 'section, [id^="settings-section-"]';
+function drillItems(panel) {
+  return [...panel.querySelectorAll(DRILL_GROUP)]
+    .filter((section) => {
+      const outer = section.parentElement.closest(DRILL_GROUP);
+      return !outer || !panel.contains(outer);
+    })
+    .map((section) => {
+      const head = section.firstElementChild;
+      const lines = head ? headLines(head) : [];
+      return { section, title: lines[0] || "", note: lines[1] || "", mark: head && [...head.querySelectorAll("svg")].find((svg) => !svg.closest("button, a")) };
+    });
+}
+function undrillPanel(panel) {
+  if (!("phDrill" in panel.dataset)) return;
+  delete panel.dataset.phDrill;
+  delete panel.dataset.phDrillOpen;
+  panel.querySelector(":scope .ph-set-nav")?.remove();
+  for (const section of panel.querySelectorAll("[data-ph-drill-sec]")) {
+    delete section.dataset.phDrillSec;
+    delete section.dataset.phDrillOn;
+  }
+}
+function openDrill(panel, section) {
+  for (const other of panel.querySelectorAll("[data-ph-drill-on]")) delete other.dataset.phDrillOn;
+  if (section) {
+    section.dataset.phDrillOn = "";
+    panel.dataset.phDrillOpen = "";
+  } else delete panel.dataset.phDrillOpen;
+}
+function drillPanel(panel) {
+  const items = drillItems(panel);
+  if (items.length < 2 || items.some((item) => !item.title)) return undrillPanel(panel);
+  const fresh = !("phDrill" in panel.dataset);
+  panel.dataset.phDrill = "";
+  for (const section of panel.querySelectorAll("[data-ph-drill-sec]")) {
+    if (!items.some((item) => item.section === section)) {
+      delete section.dataset.phDrillSec;
+      delete section.dataset.phDrillOn;
+    }
+  }
+  for (const item of items) item.section.dataset.phDrillSec = "";
+  let nav = panel.querySelector(".ph-set-nav");
+  if (!nav) {
+    nav = document.createElement("div");
+    nav.className = "ph-set-nav";
+    const back = document.createElement("button");
+    back.type = "button";
+    back.className = "ph-set-back";
+    back.append(icon("back", 16), "목록");
+    back.addEventListener("click", () => {
+      openDrill(panel, null);
+      panel.scrollTo({ top: 0 });
+    });
+    const list = document.createElement("div");
+    list.className = "ph-set-list";
+    nav.append(back, list);
+  }
+  if (nav.nextElementSibling !== items[0].section) items[0].section.before(nav);
+  const list = nav.querySelector(".ph-set-list");
+  const key = items.map((item) => item.title + "\u0001" + item.note).join("\u0002");
+  if (list.dataset.key !== key) {
+    list.dataset.key = key;
+    list.replaceChildren(
+      ...items.map((item) => {
+        const row = document.createElement("button");
+        row.type = "button";
+        row.className = "ph-set-row";
+        const mark = document.createElement("span");
+        mark.className = "ph-set-mark";
+        if (item.mark) mark.append(item.mark.cloneNode(true));
+        const text = document.createElement("span");
+        text.className = "ph-set-text";
+        const title = document.createElement("span");
+        title.className = "ph-set-title";
+        title.textContent = item.title;
+        text.append(title);
+        if (item.note) {
+          const note = document.createElement("span");
+          note.className = "ph-set-note";
+          note.textContent = item.note;
+          text.append(note);
+        }
+        row.append(mark, text, icon("chevronRight", 16));
+        row.addEventListener("click", () => {
+          const target = drillItems(panel).find((entry) => entry.title === item.title)?.section;
+          if (!target) return;
+          openDrill(panel, target);
+          panel.scrollTo({ top: 0 });
+        });
+        return row;
+      }),
+    );
+  }
+  const open = panel.querySelector("[data-ph-drill-on]");
+  if (open && !items.some((item) => item.section === open)) openDrill(panel, null);
+  if (fresh && panel.contains(document.activeElement)) {
+    const focused = document.activeElement.closest("[data-ph-drill-sec]");
+    if (focused) openDrill(panel, focused);
+  }
+  if (!panel.querySelector("[data-ph-drill-on]")) delete panel.dataset.phDrillOpen;
+}
+function revealSetting(target) {
+  const panel = target.closest('[role="tabpanel"][data-ph-drill]');
+  if (!panel) return;
+  const section = target.closest("[data-ph-drill-sec]") || target.querySelector("[data-ph-drill-sec]");
+  if (section) openDrill(panel, section);
+}
+function onSettingsTab(event) {
+  const tab = event.target.closest?.('.mari-settings-panel-chrome [role="tab"][aria-selected="true"]');
+  if (!tab) return;
+  const panel = nativeGetById.call(document, tab.getAttribute("aria-controls") || "");
+  if (panel?.dataset.phDrill !== undefined) {
+    openDrill(panel, null);
+    panel.scrollTo({ top: 0 });
+  }
+}
+const settingsTabClick = (event) => onSettingsTab(event);
+document.addEventListener("click", settingsTabClick, true);
+const nativeGetById = Document.prototype.getElementById;
+document.getElementById = function getElementById(id) {
+  const found = nativeGetById.call(this, id);
+  if (found && typeof id === "string" && /^settings-(section|control)-/.test(id)) revealSetting(found);
+  return found;
+};
+const settingsMounts = new MutationObserver(() => {
+  if (document.querySelector(".mari-settings-panel-chrome")) queueSettings();
+});
+settingsMounts.observe(document.body, { childList: true, subtree: true });
+queueSettings();
+marinara.onCleanup(() => {
+  settingsMounts.disconnect();
+  document.removeEventListener("click", settingsTabClick, true);
+  delete document.getElementById;
+  for (const panel of document.querySelectorAll("[data-ph-drill]")) undrillPanel(panel);
+});

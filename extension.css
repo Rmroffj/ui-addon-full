@@ -7503,8 +7503,8 @@ html[data-malang-ui] .mari-connection-scope .mari-connection-model-list {
   gap: 0.25rem;
 }
 html[data-malang-ui] .mari-connection-scope .mari-connection-model-well {
-  margin-left: 0.35rem;
-  border-left: 1px dotted var(--ph-accent);
+  margin-left: 1.25rem;
+  border-left: 2px solid var(--ph-accent);
   border-radius: 0 !important;
   background: transparent;
 }
@@ -7541,4 +7541,85 @@ html[data-malang-ui] .mari-connection-scope .mari-provider-icon img {
 }
 html[data-malang-ui] .mari-connection-scope .mari-connection-pill {
   border-radius: 2px !important;
+}
+html[data-malang-ui] [data-ph-drill]:not([data-ph-drill-open]) [data-ph-drill-sec],
+html[data-malang-ui] [data-ph-drill][data-ph-drill-open] [data-ph-drill-sec]:not([data-ph-drill-on]),
+html[data-malang-ui] [data-ph-drill][data-ph-drill-open] .ph-set-list,
+html[data-malang-ui] [data-ph-drill]:not([data-ph-drill-open]) .ph-set-back {
+  display: none !important;
+}
+html[data-malang-ui] .ph-set-list {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--ph-line);
+  border-radius: 4px;
+  background: var(--ph-paper);
+}
+html[data-malang-ui] .ph-set-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 3.25rem;
+  padding: 0.625rem 0.75rem;
+  color: var(--ph-mute);
+  text-align: left;
+  transition: background-color 150ms ease;
+}
+html[data-malang-ui] .ph-set-row + .ph-set-row {
+  border-top: 1px solid var(--ph-line);
+}
+html[data-malang-ui] .ph-set-row:hover {
+  background: var(--sidebar-accent);
+  color: var(--ph-ink);
+}
+html[data-malang-ui] .ph-set-mark {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  color: var(--ph-accent);
+}
+html[data-malang-ui] .ph-set-mark svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+html[data-malang-ui] .ph-set-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+html[data-malang-ui] .ph-set-title {
+  color: var(--ph-ink);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+html[data-malang-ui] .ph-set-note {
+  overflow: hidden;
+  color: var(--ph-mute);
+  font-size: 0.6875rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+html[data-malang-ui] .ph-set-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.25rem;
+  padding: 0.25rem 0.375rem 0.25rem 0.125rem;
+  color: var(--ph-mute);
+  font-size: 0.8125rem;
+  transition: color 150ms ease;
+}
+html[data-malang-ui] .ph-set-back:hover {
+  color: var(--ph-ink);
+}
+html[data-malang-ui] .mari-settings-panel-chrome [role="tablist"] ~ * {
+  border: 0 !important;
+  box-shadow: none !important;
 }
