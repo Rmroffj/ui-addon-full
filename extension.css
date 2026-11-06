@@ -7623,3 +7623,5 @@ html[data-malang-ui] .mari-settings-panel-chrome [role="tablist"] ~ * {
   border: 0 !important;
   box-shadow: none !important;
 }
+[data-ph-paged-grid] .mari-avatar-placeholder > div:not([data-character-favorite-indicator]) { height: 100%; }
+.mari-ph-paged-img:not([style*="absolute"]) { width: 100%; height: 100%; object-fit: cover; }
