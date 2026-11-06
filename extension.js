@@ -2950,11 +2950,11 @@ marinara.onCleanup(() => {
 });
 
 const CHARACTERS_ROOT_SELECTOR = '[data-component="CharactersPanelScroll"]';
-const LIBRARY_PANELS = new Set(["personas", "presets", "lorebooks", "connections", "agents"]);
+const LIBRARY_PANELS = new Set(["personas", "presets", "lorebooks", "agents"]);
 const CHARACTER_CARD_SELECTOR = `${CHARACTERS_ROOT_SELECTOR} :is([data-character-id], [data-character-folder-id] [data-touch-drag-card="character"])`;
 const CHARACTER_FOLDER_HEAD_SELECTOR = `${CHARACTERS_ROOT_SELECTOR} [data-character-folder-id] > [role="button"]`;
 const PERSONA_ROW_SELECTOR = '[data-panel-key="personas"] [data-touch-drag-card]';
-const PLAIN_LISTS = new Set(["presets", "connections", "agents"]);
+const PLAIN_LISTS = new Set(["presets", "agents"]);
 const AGENT_MODE_LABELS = { All: "전체", Conversation: "대화", Roleplay: "롤플", Game: "게임" };
 const LIBRARY_ICONS = {
   back: '<path d="m15 18-6-6 6-6"/>',
@@ -2999,7 +2999,7 @@ function rowKind(row) {
   if (row.matches(".mari-ph-folder-bar, .mari-ph-tabs, .mari-ph-char-pager, [data-ph-paged-grid], [data-ph-paged-tags], .mari-ph-pick-bar")) return null;
   if (row.matches("input")) return "hidden";
   if (row.parentElement?.dataset.malangLibrary === "agents") {
-    if (row.matches("button") && row.querySelector(".lucide-sparkles")) return "agent-download";
+    if (row.matches("button") && row === row.parentElement.querySelector(":scope > button")) return "agent-download";
     if (row.querySelector(".lucide-dices, .lucide-grid3x3, .lucide-grid-3x3")) return "agent-rules";
   }
   if (/LibraryActions$/.test(row.dataset.component ?? "")) return "library";
@@ -3011,7 +3011,7 @@ function rowKind(row) {
   if (row.querySelector(":scope > [data-touch-drag-card], :scope > [data-character-id]")) return "cards";
   if (row.querySelector(':scope > * > input:not([type="hidden"])')) return "search";
   if (row.querySelector(":scope > .mari-panel-gradient-button")) return "actions";
-  if (row.querySelector(":scope > svg") && !row.querySelector("button, input, select, a") && row.textContent.trim()) return "heading";
+  if (!row.matches("button, a, [role='button']") && row.querySelector(":scope > svg") && !row.querySelector("button, input, select, a") && row.textContent.trim()) return "heading";
   if (row.querySelector('[data-drag-kind$="folder"], [data-touch-drag-card]')) return "section";
   if (row.querySelector(":scope > button[aria-pressed]") || (row.children.length > 0 && [...row.children].every((child) => child.tagName === "BUTTON" || (child.children.length === 1 && child.firstElementChild.tagName === "BUTTON")))) return "tags";
   return "other";
@@ -4147,7 +4147,7 @@ function tagLibraryRow(row, kind) {
       if (button.querySelector(".lucide-users, .lucide-venetian-mask")) setPart(button, "phLib", "personas"); else clearPart(button, "phLib");
       if (button.tagName === "BUTTON") for (const part of button.children) setFlag(part, "phLibLabel", part.tagName.toLowerCase() !== "svg" && !part.querySelector("svg"));
     }
-  } else if (kind === "other" && row.parentElement?.dataset.malangLibrary === "connections") tagTile(row);
+  }
 }
 function isSectionIntro(part, body) {
   return body.children.length > 1 && !part.matches("[data-preset-regex-root]")

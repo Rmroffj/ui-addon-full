@@ -6283,11 +6283,6 @@ html[data-malang-ui] [data-malang-library="lorebooks"] [data-touch-drag-card] [d
   color: var(--ph-mute);
   font-family: inherit;
 }
-html[data-malang-ui] [data-malang-library="connections"] > :is([data-malang-row="other"]:not([data-connection-folder-root]), [data-component="TTSConfigCard"]) > *,
-html[data-malang-ui] [data-malang-library="connections"] > :is([data-malang-row="other"]:not([data-connection-folder-root]), [data-component="TTSConfigCard"]) {
-  border-radius: 4px !important;
-  box-shadow: none !important;
-}
 
 [data-component="CharactersPanelScroll"] [data-character-id] {
   animation: rpc-seen 1ms;
@@ -6372,33 +6367,6 @@ html[data-malang-ui] [data-malang-library="lorebooks"] [data-touch-drag-card] > 
 }
 html[data-malang-ui] [data-malang-library="lorebooks"] [data-touch-drag-card] > [data-ph-card-icon] svg {
   color: var(--ph-ink) !important;
-}
-
-html[data-malang-ui] [data-malang-library="connections"] > :is([data-malang-row="other"]:not([data-connection-folder-root]), [data-component="TTSConfigCard"]) {
-  border: 1px solid var(--ph-line) !important;
-  border-left: 3px solid var(--ph-ink) !important;
-  border-radius: 4px !important;
-  background: var(--background) !important;
-  background-image: none !important;
-  box-shadow: none !important;
-}
-html[data-malang-ui] [data-malang-library="connections"] > :is([data-malang-row="other"]:not([data-connection-folder-root]), [data-component="TTSConfigCard"]) [data-ph-tile] {
-  border: 1px solid var(--ph-line);
-  border-radius: 3px !important;
-  background: var(--ph-sheet) !important;
-  background-image: none !important;
-  box-shadow: none !important;
-  color: var(--ph-ink) !important;
-}
-html[data-malang-ui] [data-malang-library="connections"] > :is([data-malang-row="other"]:not([data-connection-folder-root]), [data-component="TTSConfigCard"]) [data-ph-tile-text] > :not([data-ph-tile-sub]) {
-  color: var(--ph-ink);
-  font-family: inherit;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-html[data-malang-ui] [data-malang-library="connections"] > :is([data-malang-row="other"]:not([data-connection-folder-root]), [data-component="TTSConfigCard"]) [data-ph-tile-text] > [data-ph-tile-sub] {
-  color: var(--ph-mute);
-  font-family: inherit;
 }
 html[data-malang-ui] [data-malang-library] > [data-malang-row="newfolder"] > :not([data-ph-lib="folder-tools"]) button {
   height: 1.75rem;
@@ -7076,7 +7044,7 @@ html[data-ph-details-open] [data-component="CenterContent"] {
   letter-spacing: normal !important;
 }
 
-html[data-malang-ui] :is([data-component="CharactersPanelScroll"], :is([data-panel-key="personas"], [data-panel-key="presets"], [data-panel-key="lorebooks"], [data-panel-key="connections"], [data-panel-key="agents"]) > *):not([data-malang-library]) {
+html[data-malang-ui] :is([data-component="CharactersPanelScroll"], :is([data-panel-key="personas"], [data-panel-key="presets"], [data-panel-key="lorebooks"], [data-panel-key="agents"]) > *):not([data-malang-library]) {
   opacity: 0;
   animation: ph-page-release 0s 1.5s forwards;
 }
@@ -7088,7 +7056,7 @@ html[data-ph-failed~="library"] :is([data-component="CharactersPanelScroll"], [d
     opacity: 1;
   }
 }
-html[data-malang-ui] :is([data-component="CharactersPanelScroll"], :is([data-panel-key="personas"], [data-panel-key="presets"], [data-panel-key="lorebooks"], [data-panel-key="connections"], [data-panel-key="agents"]) > *)[data-malang-library] {
+html[data-malang-ui] :is([data-component="CharactersPanelScroll"], :is([data-panel-key="personas"], [data-panel-key="presets"], [data-panel-key="lorebooks"], [data-panel-key="agents"]) > *)[data-malang-library] {
   animation: rpc-seen 1ms, ph-page-in 0.16s ease-out;
 }
 @keyframes ph-page-in {
@@ -7416,13 +7384,13 @@ html[data-malang-ui] [data-ph-convo] .mari-message-avatar > :is(button, div) { b
   [data-lorebook-entry-row-id] > [data-ph-lore="head"] { position: relative; }
   [data-lorebook-entry-row-id] > [data-ph-lore="head"] > [data-ph-lore="quick"] { position: static !important; }
 }
-html[data-malang-ui] :is([data-malang-library="lorebooks"] [data-touch-drag-card] > [data-ph-lore-actions], :is([data-malang-library="presets"], [data-malang-library="connections"]) [data-ph-item] > [data-ph-actions]) { position: absolute !important; inset: auto 10px 8px auto !important; display: flex; gap: 0.125rem; margin: 0 !important; padding: 0 !important; transform: none !important; translate: none !important; border: 0 !important; background: none !important; box-shadow: none !important; opacity: 1 !important; pointer-events: auto !important; }
-html[data-malang-ui] :is([data-malang-library="lorebooks"] [data-touch-drag-card] > [data-ph-lore-actions], :is([data-malang-library="presets"], [data-malang-library="connections"]) [data-ph-item] > [data-ph-actions]) button { width: 1.5rem; min-width: 1.5rem; height: 1.5rem; min-height: 1.5rem; padding: 0.25rem; border: 0 !important; background: transparent !important; box-shadow: none !important; pointer-events: auto !important; }
-html[data-malang-ui] :is([data-malang-library="lorebooks"] [data-touch-drag-card] > [data-ph-lore-actions], :is([data-malang-library="presets"], [data-malang-library="connections"]) [data-ph-item] > [data-ph-actions]) button svg { width: 0.875rem; height: 0.875rem; }
-html[data-malang-ui] :is([data-malang-library="lorebooks"] [data-touch-drag-card] > [data-ph-lore-text], :is([data-malang-library="presets"], [data-malang-library="connections"]) [data-ph-item] [data-ph-card-text]) { padding-right: 5.25rem !important; }
+html[data-malang-ui] :is([data-malang-library="lorebooks"] [data-touch-drag-card] > [data-ph-lore-actions], [data-malang-library="presets"] [data-ph-item] > [data-ph-actions]) { position: absolute !important; inset: auto 10px 8px auto !important; display: flex; gap: 0.125rem; margin: 0 !important; padding: 0 !important; transform: none !important; translate: none !important; border: 0 !important; background: none !important; box-shadow: none !important; opacity: 1 !important; pointer-events: auto !important; }
+html[data-malang-ui] :is([data-malang-library="lorebooks"] [data-touch-drag-card] > [data-ph-lore-actions], [data-malang-library="presets"] [data-ph-item] > [data-ph-actions]) button { width: 1.5rem; min-width: 1.5rem; height: 1.5rem; min-height: 1.5rem; padding: 0.25rem; border: 0 !important; background: transparent !important; box-shadow: none !important; pointer-events: auto !important; }
+html[data-malang-ui] :is([data-malang-library="lorebooks"] [data-touch-drag-card] > [data-ph-lore-actions], [data-malang-library="presets"] [data-ph-item] > [data-ph-actions]) button svg { width: 0.875rem; height: 0.875rem; }
+html[data-malang-ui] :is([data-malang-library="lorebooks"] [data-touch-drag-card] > [data-ph-lore-text], [data-malang-library="presets"] [data-ph-item] [data-ph-card-text]) { padding-right: 5.25rem !important; }
 @media (max-width: 767px) {
-  html[data-malang-ui] :is([data-malang-library="lorebooks"] [data-touch-drag-card] > [data-ph-lore-actions], :is([data-malang-library="presets"], [data-malang-library="connections"]) [data-ph-item] > [data-ph-actions]) button { width: 20px; min-width: 20px; height: 20px; min-height: 20px; padding: 3px; }
-  html[data-malang-ui] :is([data-malang-library="lorebooks"] [data-touch-drag-card] > [data-ph-lore-actions], :is([data-malang-library="presets"], [data-malang-library="connections"]) [data-ph-item] > [data-ph-actions]) button svg { width: 12px; height: 12px; }
+  html[data-malang-ui] :is([data-malang-library="lorebooks"] [data-touch-drag-card] > [data-ph-lore-actions], [data-malang-library="presets"] [data-ph-item] > [data-ph-actions]) button { width: 20px; min-width: 20px; height: 20px; min-height: 20px; padding: 3px; }
+  html[data-malang-ui] :is([data-malang-library="lorebooks"] [data-touch-drag-card] > [data-ph-lore-actions], [data-malang-library="presets"] [data-ph-item] > [data-ph-actions]) button svg { width: 12px; height: 12px; }
   html[data-malang-ui] [data-malang-library] [data-folder-actions] button { min-width: 22px !important; min-height: 22px !important; width: 22px; height: 22px; padding: 4px !important; }
   html[data-malang-ui] [data-malang-library] [data-folder-actions] button svg { width: 12px; height: 12px; }
 }
@@ -7455,3 +7423,121 @@ html[data-malang-ui] [data-ph-convo] [data-ph-convo-hidden] { width: fit-content
 .mari-ph-pick-bar > button { display: inline-flex; align-items: center; gap: 0.3125rem; height: 1.75rem; padding: 0 0.5rem; border: 0; border-radius: 3px; background: none; color: var(--ph-ink); font-size: 0.75rem; font-weight: 600; }
 .mari-ph-pick-bar > button:hover { background: color-mix(in srgb, var(--ph-ink) 8%, transparent); }
 .mari-ph-pick-bar > button[aria-pressed="true"] { color: var(--ph-accent); }
+
+html[data-malang-ui] {
+  --ph-switch-on: color-mix(in srgb, var(--primary) 70%, var(--background));
+  --ph-switch-off: var(--border);
+  --ph-switch-thumb: var(--background);
+}
+html[data-malang-ui] [data-settings-switch-track] {
+  background-color: var(--ph-switch-off) !important;
+  background-image: none !important;
+}
+html[data-malang-ui] :is(input:checked + [data-settings-switch-track], [data-settings-switch-track].mari-accent-animated) {
+  background-color: var(--ph-switch-on) !important;
+}
+html[data-malang-ui] [data-settings-switch-thumb] {
+  background-color: var(--ph-switch-thumb) !important;
+  --tw-ring-color: var(--ph-switch-off);
+}
+html[data-malang-ui] :is(.mari-connection-scope, .mari-panel-gradient--connections) {
+  --mari-panel-gradient-start: var(--ph-accent);
+  --mari-panel-gradient-end: var(--ph-accent);
+  --mari-panel-gradient-text: #fff;
+  --mari-connection-blue: var(--ph-ink);
+  --mari-connection-ink: var(--ph-ink);
+  --mari-connection-tint: var(--ph-field);
+  --mari-connection-ring: var(--ph-rule);
+}
+html[data-malang-ui] [data-connections-panel] {
+  gap: 0.625rem;
+}
+html[data-malang-ui] .mari-connection-scope :is(.mari-chrome-field, .mari-chrome-control, .mari-editor-action, .mari-connection-chip, [data-model-star]) {
+  border-radius: 3px !important;
+  box-shadow: none !important;
+}
+html[data-malang-ui] .mari-connection-scope .mari-chrome-field {
+  border: 1px solid var(--ph-line);
+  background: var(--ph-paper);
+}
+html[data-malang-ui] .mari-connection-scope :is(.mari-chrome-control--primary, .mari-editor-action--primary):not(:disabled) {
+  border: 0 !important;
+  background: var(--ph-accent) !important;
+  background-image: none !important;
+  color: #fff !important;
+}
+html[data-malang-ui] .mari-connection-scope .mari-connection-chip {
+  border-color: var(--ph-line);
+}
+html[data-malang-ui] .mari-connection-scope .mari-connection-chip[aria-pressed="true"] {
+  border-color: var(--ph-ink);
+  background: var(--ph-ink);
+  color: var(--ph-paper);
+}
+html[data-malang-ui] .mari-connection-scope [data-connection-model-picker] {
+  border-color: var(--ph-line);
+  border-radius: 4px !important;
+}
+html[data-malang-ui] .mari-connection-scope .mari-connection-group {
+  padding: 0.375rem;
+  border: 1px solid var(--ph-line);
+  border-radius: 4px !important;
+  background: var(--ph-paper);
+  box-shadow: none !important;
+}
+html[data-malang-ui] .mari-connection-scope .mari-connection-group.mari-connection-defaults-box {
+  background: var(--ph-sheet);
+}
+html[data-malang-ui] .mari-connection-scope .mari-connection-card-head,
+html[data-malang-ui] .mari-connection-scope .mari-connection-card-head :is(button, [role="button"]),
+html[data-malang-ui] .mari-connection-scope .mari-connection-browse {
+  border-radius: 3px !important;
+}
+html[data-malang-ui] [data-connections-panel] .mari-connection-card-head strong,
+html[data-malang-ui] .mari-connection-scope [data-model-title] {
+  color: var(--ph-ink);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+html[data-malang-ui] .mari-connection-scope .mari-connection-model-list {
+  gap: 0.25rem;
+}
+html[data-malang-ui] .mari-connection-scope .mari-connection-model-well {
+  border-top: 1px solid var(--ph-line);
+  border-radius: 0 !important;
+  background: transparent;
+}
+html[data-malang-ui] .mari-connection-scope .mari-connection-model-slot + .mari-connection-model-slot,
+html[data-malang-ui] .mari-connection-scope .mari-connection-model-section-head + .mari-connection-model-slot {
+  border-top: 1px dashed var(--ph-line);
+}
+html[data-malang-ui] .mari-connection-scope .mari-connection-model {
+  border-radius: 3px;
+}
+html[data-malang-ui] .mari-connection-scope .mari-connection-model:hover {
+  background: var(--sidebar-accent);
+}
+html[data-malang-ui] .mari-connection-scope .mari-connection-model-section-head {
+  background: var(--ph-sheet);
+  color: var(--ph-mute);
+  font-weight: 500;
+}
+html[data-malang-ui] .mari-connection-scope .mari-connection-model-section-head:hover {
+  background: var(--sidebar-accent);
+}
+html[data-malang-ui] .mari-connection-scope .mari-provider-icon {
+  border-radius: 3px !important;
+  background: var(--secondary);
+  color: var(--ph-ink);
+  box-shadow: none;
+}
+html[data-malang-ui] [data-connections-panel] .mari-connection-card-head .mari-provider-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+}
+html[data-malang-ui] .mari-connection-scope .mari-provider-icon img {
+  border-radius: 3px !important;
+}
+html[data-malang-ui] .mari-connection-scope .mari-connection-pill {
+  border-radius: 2px !important;
+}
