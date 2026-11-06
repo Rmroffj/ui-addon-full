@@ -7596,7 +7596,7 @@ html[data-malang-ui] .ph-set-text {
 }
 html[data-malang-ui] .ph-set-title {
   color: var(--ph-ink);
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 500;
 }
 html[data-malang-ui] .ph-set-note {

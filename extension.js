@@ -48,6 +48,7 @@ syncCaught = guard("widgets", syncCaught);
 onCatchEvent = guard("widgets", onCatchEvent);
 syncSettingsMenu = guard("settings", syncSettingsMenu);
 revealSetting = guard("settings", revealSetting);
+revealScroll = guard("settings", revealScroll);
 onSettingsTab = guard("settings", onSettingsTab);
 marinara.onCleanup(() => delete document.documentElement.dataset.phFailed);
 const scrapbookBootTimer = marinara.setTimeout(() => document.documentElement.dataset.scrapbookReady = "", 10000);
@@ -4708,9 +4709,12 @@ function queueSettings() {
   });
 }
 function syncSettingsMenu() {
-  for (const panel of document.querySelectorAll('.mari-settings-panel-chrome [role="tabpanel"]:not([hidden])')) drillPanel(panel);
+  for (const panel of document.querySelectorAll('.mari-settings-panel-chrome [role="tabpanel"]:not([hidden])')) {
+    if (panel.id === "settings-panel-addons") undrillPanel(panel);
+    else drillPanel(panel);
+  }
 }
-function headLines(head, loose) {
+function headLines(head, loose, strict) {
   const parts = [];
   const walker = document.createTreeWalker(head, NodeFilter.SHOW_TEXT);
   for (let node = walker.nextNode(); node; node = walker.nextNode()) {
@@ -4722,7 +4726,7 @@ function headLines(head, loose) {
     else parts.push({ owner, text });
   }
   const lines = parts.map((part) => part.text);
-  return lines.length || loose ? lines : headLines(head, true);
+  return lines.length || loose || strict ? lines : headLines(head, true);
 }
 const DRILL_GROUP = 'section, [id^="settings-section-"]';
 function drillItems(panel) {
@@ -4732,7 +4736,7 @@ function drillItems(panel) {
       return !outer || !panel.contains(outer);
     })
     .map((section) => {
-      const head = section.firstElementChild;
+      const head = [...section.children].slice(0, 3).find((child) => headLines(child, false, true).length) || section.firstElementChild;
       const lines = head ? headLines(head) : [];
       return { section, title: lines[0] || "", note: lines[1] || "", mark: head && [...head.querySelectorAll("svg")].find((svg) => !svg.closest("button, a")) };
     });
@@ -4740,6 +4744,7 @@ function drillItems(panel) {
 function undrillPanel(panel) {
   if (!("phDrill" in panel.dataset)) return;
   delete panel.dataset.phDrill;
+  delete panel.scrollTo;
   delete panel.dataset.phDrillOpen;
   panel.querySelector(":scope .ph-set-nav")?.remove();
   for (const section of panel.querySelectorAll("[data-ph-drill-sec]")) {
@@ -4759,6 +4764,7 @@ function drillPanel(panel) {
   if (items.length < 2 || items.some((item) => !item.title)) return undrillPanel(panel);
   const fresh = !("phDrill" in panel.dataset);
   panel.dataset.phDrill = "";
+  if (fresh) panel.scrollTo = drillScrollTo;
   for (const section of panel.querySelectorAll("[data-ph-drill-sec]")) {
     if (!items.some((item) => item.section === section)) {
       delete section.dataset.phDrillSec;
@@ -4776,7 +4782,7 @@ function drillPanel(panel) {
     back.append(icon("back", 16), "목록");
     back.addEventListener("click", () => {
       openDrill(panel, null);
-      panel.scrollTo({ top: 0 });
+      nativeScrollTo.call(panel, { top: 0 });
     });
     const list = document.createElement("div");
     list.className = "ph-set-list";
@@ -4812,7 +4818,7 @@ function drillPanel(panel) {
           const target = drillItems(panel).find((entry) => entry.title === item.title)?.section;
           if (!target) return;
           openDrill(panel, target);
-          panel.scrollTo({ top: 0 });
+          nativeScrollTo.call(panel, { top: 0 });
         });
         return row;
       }),
@@ -4826,11 +4832,22 @@ function drillPanel(panel) {
   }
   if (!panel.querySelector("[data-ph-drill-on]")) delete panel.dataset.phDrillOpen;
 }
+let settingTarget = null;
 function revealSetting(target) {
-  const panel = target.closest('[role="tabpanel"][data-ph-drill]');
-  if (!panel) return;
-  const section = target.closest("[data-ph-drill-sec]") || target.querySelector("[data-ph-drill-sec]");
-  if (section) openDrill(panel, section);
+  settingTarget = { target, at: performance.now() };
+}
+function revealScroll(panel, options) {
+  const pending = settingTarget;
+  settingTarget = null;
+  if (!pending || options?.behavior !== "smooth" || performance.now() - pending.at > 1000 || !panel.contains(pending.target)) return options;
+  const section = pending.target.closest("[data-ph-drill-sec]") || pending.target.querySelector("[data-ph-drill-sec]");
+  if (!section) return options;
+  openDrill(panel, section);
+  return { ...options, top: Math.max(0, pending.target.offsetTop - 12) };
+}
+function drillScrollTo(options, y) {
+  if (options && typeof options === "object") return nativeScrollTo.call(this, revealScroll(this, options) || options);
+  return nativeScrollTo.call(this, options, y);
 }
 function onSettingsTab(event) {
   const tab = event.target.closest?.('.mari-settings-panel-chrome [role="tab"][aria-selected="true"]');
@@ -4838,12 +4855,13 @@ function onSettingsTab(event) {
   const panel = nativeGetById.call(document, tab.getAttribute("aria-controls") || "");
   if (panel?.dataset.phDrill !== undefined) {
     openDrill(panel, null);
-    panel.scrollTo({ top: 0 });
+    nativeScrollTo.call(panel, { top: 0 });
   }
 }
 const settingsTabClick = (event) => onSettingsTab(event);
 document.addEventListener("click", settingsTabClick, true);
 const nativeGetById = Document.prototype.getElementById;
+const nativeScrollTo = Element.prototype.scrollTo;
 document.getElementById = function getElementById(id) {
   const found = nativeGetById.call(this, id);
   if (found && typeof id === "string" && /^settings-(section|control)-/.test(id)) revealSetting(found);
