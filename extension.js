@@ -101,7 +101,6 @@ marinara.onCleanup(() => {
 
 const ROOT_SELECTOR = '.rpg-chat-area[data-chat-mode="roleplay"][data-roleplay-presentation="classic"]';
 const SVG_NS = "http://www.w3.org/2000/svg";
-const PLATE_MIN_WIDTH = "(min-width: 1024px)";
 
 const range = (count) => Array.from({ length: count }, (_, index) => index);
 
@@ -2301,39 +2300,6 @@ function openMenu(anchor, items, align = "end") {
 }
 marinara.onCleanup(() => closeMenu?.());
 
-function askDialog({ title, message, confirmLabel = "확인", danger = false, value = null }) {
-  return new Promise((resolve) => {
-    const input = value === null ? null : h("input.scrapbook-ask-input", { type: "text", "aria-label": title });
-    if (input) input.value = value;
-    const dismissed = input ? null : false;
-    const finish = (result) => {
-      resolve(result);
-      if (dialog.open) dialog.close();
-    };
-    const ok = h(`button.scrapbook-ask-ok${danger ? ".scrapbook-ask-danger" : ""}`, { type: "button", onClick: () => finish(input ? input.value.trim() : true) }, confirmLabel);
-    const dialog = h(
-      "dialog.scrapbook-ask",
-      { "aria-label": title },
-      h("header", null, h("strong", null, title), h("button", { type: "button", "aria-label": "닫기", onClick: () => finish(dismissed) }, "×")),
-      message && h("p", null, message),
-      input,
-      h("footer", null, h("button", { type: "button", onClick: () => finish(dismissed) }, "취소"), ok),
-    );
-    dialog.addEventListener("cancel", (event) => {
-      event.preventDefault();
-      finish(dismissed);
-    });
-    input?.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" && !event.isComposing) ok.click();
-    });
-    dialog.addEventListener("close", () => dialog.remove(), { once: true });
-    document.body.append(dialog);
-    dialog.showModal();
-    (input ?? ok).focus();
-    input?.select();
-  });
-}
-
 function startChatAndShow(character, mode) {
   return startChatFrom(character, mode).then(
     () => {
@@ -3645,7 +3611,7 @@ function markPart(node, name) {
 function markItem(card) {
   markPart(card, "phItem");
   markPart(card.parentElement, "phList");
-  const { text, title, meta, actions, icon } = tagCard(card);
+  const { title, meta, actions, icon } = tagCard(card);
   markPart(title, "phName");
   meta.forEach((line, index) => setPart(line, "phMeta", String(index + 1)));
   if (icon?.tagName === "BUTTON") markPart(icon, "phIcon");
@@ -4406,6 +4372,7 @@ function settingsView() {
     null,
     modeSection("light", "라이트 모드"),
     modeSection("dark", "다크 모드"),
+    fontSection(),
     h(
       "section.mari-ph-setting-group",
       null,
@@ -4878,4 +4845,98 @@ marinara.onCleanup(() => {
   document.removeEventListener("click", settingsTabClick, true);
   delete document.getElementById;
   for (const panel of document.querySelectorAll("[data-ph-drill]")) undrillPanel(panel);
+});
+ICONS.minus = '<path d="M5 12h14"/>';
+ICONS.plus = '<path d="M5 12h14"/><path d="M12 5v14"/>';
+const CONVO_FONT_KEY = "scrapbook-convo-font";
+
+function convoFont() {
+  try {
+    const size = Number(localStorage.getItem(CONVO_FONT_KEY));
+    return size >= 12 && size <= 72 ? size : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function applyConvoFont() {
+  const root = document.documentElement;
+  const size = convoFont();
+  if (size) {
+    root.style.setProperty("--ph-convo-fs", `${size}px`);
+    root.dataset.phConvoFs = "";
+  } else {
+    root.style.removeProperty("--ph-convo-fs");
+    delete root.dataset.phConvoFs;
+  }
+}
+
+function fontSection() {
+  const ui = () => findStores().ui?.getState();
+  const clamp = (size) => Math.min(72, Math.max(12, size));
+  const rows = [
+    {
+      label: "UI",
+      get: () => ui()?.fontSize ?? 17,
+      note: (size) => (size === 17 ? "기본값" : ""),
+      step: (size, dir) => ui()?.setFontSize(Math.min(34, Math.max(12, size + dir))),
+      min: (size) => size <= 12,
+      max: (size) => size >= 34,
+    },
+    {
+      label: "RP",
+      get: () => ui()?.chatFontSize ?? 16,
+      note: () => "",
+      step: (size, dir) => ui()?.setChatFontSize(clamp(size + dir)),
+      min: (size) => size <= 12,
+      max: (size) => size >= 72,
+    },
+    {
+      label: "Convo",
+      get: () => convoFont() || ui()?.chatFontSize || 16,
+      note: () => "",
+      step: (size, dir) => {
+        try {
+          localStorage.setItem(CONVO_FONT_KEY, String(clamp(size + dir)));
+        } catch {}
+        applyConvoFont();
+      },
+      min: (size) => size <= 12,
+      max: (size) => size >= 72,
+      reset: () => {
+        try {
+          localStorage.removeItem(CONVO_FONT_KEY);
+        } catch {}
+        applyConvoFont();
+      },
+    },
+  ];
+  const group = h("section.mari-ph-setting-group", null, h("h3", null, "글자 크기"));
+  for (const row of rows) {
+    const note = h("small");
+    const value = h("output");
+    const draw = () => {
+      const size = row.get();
+      value.textContent = `${size}px`;
+      note.textContent = row.note(size);
+      down.disabled = row.min(size);
+      up.disabled = row.max(size);
+      if (reset) reset.hidden = !convoFont();
+    };
+    const press = (dir) => () => {
+      row.step(row.get(), dir);
+      draw();
+    };
+    const down = h("button.mari-ph-font-step", { type: "button", "aria-label": `${row.label} 글자 작게`, onClick: press(-1) }, icon("minus", 16));
+    const up = h("button.mari-ph-font-step", { type: "button", "aria-label": `${row.label} 글자 크게`, onClick: press(1) }, icon("plus", 16));
+    const reset = row.reset ? h("button.mari-ph-font-reset", { type: "button", onClick: () => { row.reset(); draw(); } }, "초기화") : null;
+    group.append(h("div.mari-ph-setting-row", null, h("span", null, row.label, note, reset), down, value, up));
+    draw();
+  }
+  return group;
+}
+applyConvoFont();
+marinara.onCleanup(() => {
+  document.documentElement.style.removeProperty("--ph-convo-fs");
+  delete document.documentElement.dataset.phConvoFs;
 });
