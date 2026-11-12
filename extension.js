@@ -300,7 +300,7 @@ const THEMES = [
     id: "digital",
     emblems: ["globe", "target", "orbit"],
     symbols: "▶︎ ■︎ ●︎",
-    tags: weigh(["버튜버", "SF", "로봇", "외계인", "RPG", "게임"], ["시뮬레이터", "유명인"]),
+    tags: weigh(["SF", "로봇", "외계인", "RPG", "게임"], ["시뮬레이터"]),
   },
   {
     id: "sweet",
@@ -1183,7 +1183,17 @@ function avatarImage(src, crop, className = "mari-ph-img") {
 function cropCoverImage(src, crop) {
   const style = cropStyle(crop);
   const image = h("img", { src, alt: "", draggable: false, style });
-  return style ? h("span.mari-ph-crop", null, image) : image;
+  if (style) return h("span.mari-ph-crop", null, image);
+  image.addEventListener("load", () => {
+    const { naturalWidth: width, naturalHeight: height } = image;
+    if (!(height > width) || !image.parentNode) return;
+    const side = width / height;
+    const box = h("span.mari-ph-crop");
+    image.replaceWith(box);
+    for (const [prop, val] of Object.entries(cropStyle({ srcX: 0, srcY: (1 - side) / 2, srcWidth: 1, srcHeight: side }))) image.style.setProperty(prop, val);
+    box.append(image);
+  }, { once: true });
+  return image;
 }
 
 let stores = null;
